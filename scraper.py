@@ -1,7 +1,34 @@
 import re
+import nltk
+nltk.download('stopwords')
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import  re
+
+# recives string of text and returns a map with the 
+# english nonStopwords and their frequency
+# based on code from Cole Hajek's CS 121 assignment 1
+def removeStopWords(string):
+    from nltk.corpus import stopwords
+    sWords = set(stopwords.words('english'))        #set up set of all english stop words
+
+    tokens = []
+    #set regex "pattern" to accept all strings of alphanumeric characters
+    #+O(n) time for the regex
+    pattern = r'[0-9a-zA-Z_]+'
+    tokens = re.findall(pattern, string, flags=re.I)
+
+    counter = {}
+    for item in tokens:
+        lowerString = item.lower()
+        if item in sWords:          #if its a stopWord, don't add it to the counter.
+            continue
+        elif lowerString in counter:
+            counter[lowerString] += 1
+        else:
+            counter[lowerString] = 1
+    return counter      
+    
 
 def scraper(url, resp):
     '''
