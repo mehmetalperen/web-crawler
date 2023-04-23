@@ -2,22 +2,68 @@ import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import validators
+from stop_words import get_stop_words
 
+stop_words = set(get_stop_words('en'))
+tokenized_sites = {} # site_url : [] #list of tokens found in that site => for question 2 and 3
+visitted_urls = set() #so we dont revist urls that already visited => for question 1
+ics_subdomains = set() #for question 5
+'''
+check the classes to avoid global variables
+'''
+def tokenizer(page_text_content):
+    tokens = []
+    
+    cur_word = ""
+    for ch in page_text_content: #read line character by character
+        if ch in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890': #check if character is in english alphabet or a number
+            cur_word += ch.lower() #convert that ch to lower case and add it to the cur_word
+        elif cur_word in stop_words:
+            cur_word = ""        
+        elif len(cur_word) > 1: #we do not want single charecters. for example James's would give us "James" and "s" if we dont do this 
+            tokens.append(cur_word) # add cur word to token list 
+            cur_word = "" #reset cur_word
+            
+    if cur_word and cur_word not in stop_words: #if cur_word is not empty, we need to add it to the list bc we do not wanna skip the last word unadded
+        tokens.append(cur_word)
+    return tokens
+
+def find_longest_page():
+    longet_page_url = ''
+    longet_page_len = 0
+    for site_url in tokenized_sites:
+        if len(tokenized_sites[site_url]) > longet_page_len:
+            longet_page_url = site_url
+            longet_page_len = len(tokenized_sites[site_url])
+            
+    return longet_page_url
+
+
+def common_words():
+    counter = {}
+    for site_url in tokenized_sites:
+        for word in tokenized_sites[site_url]:
+            if word not in counter:
+                counter[word] = 1
+            else:
+                counter[word] += 1
+                
+    most_common_words = sorted(counter.items(), key=lambda el: (-el[1], el[0]), reverse=False)#Source: https://stackoverflow.com/questions/1915564/python-convert-a-dictionary-to-a-sorted-list-by-value-instead-of-key
+
+    return most_common_words[0:50]
+        
 def scraper(url, resp):
     '''
     This function needs to return a list of urls that are scraped from the response. 
     These urls will be added to the Frontier and retrieved from the cache. 
     These urls have to be filtered so that urls that do not have to be downloaded are not added to the frontier.
     '''
-    print('===========================TESTING START=======================') #FEEL FREE TO REMOVE THIS. 
-    print('URL:', url)#FEEL FREE TO REMOVE THIS. 
-    print('RESP: ', resp)#FEEL FREE TO REMOVE THIS. 
+    # robot.txt => check if you have permission to crawl, if no permission, return []
+    #have can_crawl function here. check if you have persmission to crawl. if no permission, return []. else continue with the below code
+    
     links = extract_next_links(url, resp)
-    print('links: ', links)#FEEL FREE TO REMOVE THIS. 
     res = [link for link in links if is_valid(link)]
-    print('--------------------------------------------------------------')
-    print('RES: ', res)
-    print('===========================TESTING DONE=======================')#FEEL FREE TO REMOVE THIS. 
+    # print('===========================TESTING DONE=======================')#FEEL FREE TO REMOVE THIS. 
     return res 
 
 
@@ -25,6 +71,7 @@ def is_absolute_url(url):
     return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
 def extract_next_links(url, resp):
+    '''
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -33,13 +80,21 @@ def extract_next_links(url, resp):
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
-    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    if resp.status != 200: #if err, then return empty list
-        return []
+    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content'''
+    if resp.status != 200 and  url not in visitted_urls: #if err, then return empty list
+        return []   
     
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
     links = soup.find_all('a', href=True) #all the links from the html content
+    text_content = soup.get_text()
+    
+    if not text_content: #if there is no content in the site, we dont want to crawl it. 
+        visitted_urls.add(url) #NOT SURE IF WE SHOULD DO THIS. WE DON'T WANNA REVIST THIS SITE FS FS BUT WE ALSO DON'T WANNA CRAWL THIS. IF WE DO THIS, DOES THAT MEAN WE CRAWL THIS PAGE?
+        return []        
+    # tokenized_sites[url] = tokenizer(text_content)
+
     urls = []
+    # print('URL: ', url)
     for link in links:
         cur_link = link['href']
         if 'mailto:' in cur_link:
@@ -53,16 +108,20 @@ def extract_next_links(url, resp):
             urls.append(cur_link) #http is not missing, url is absolute absolute
         else:
             urls.append(url+cur_link) #relative link, combine cur_link with url
+    visitted_urls.add(url)
+    if 'ics.uci.edu' in url and url not in ics_subdomains:
+        ics_subdomains.add(url)
+    # print('URL LIST: ', urls)
     return urls
     
 def is_valid_domain(netloc):
     netloc = netloc.lower()
     return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
 def is_valid(url):
+    """
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
-    """
     Notes:
         -- domains: .ics.uci.edu, .cs.uci.edu, .informatics.uci.edu, .stat.uci.edu 
             Question: do we filter out all except ics.uci.edu? (github README says this)
