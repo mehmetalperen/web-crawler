@@ -3,10 +3,11 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import validators
 from stop_words import get_stop_words
+import urllib.robotparser as urobot
+
 
 stop_words = set(get_stop_words('en'))
 tokenized_sites = {} # site_url : [] #list of tokens found in that site => for question 2 and 3
-visitted_urls = set() #so we dont revist urls that already visited => for question 1
 ics_subdomains = set() #for question 5
 '''
 check the classes to avoid global variables
@@ -52,14 +53,20 @@ def common_words():
 
     return most_common_words[0:50]
         
+def check_crawl_persmission(url):
+    rp = urobot.RobotFileParser()
+    rp.set_url(url + "/robots.txt")
+    rp.read()
+    return rp.can_fetch("*", url)
+
 def scraper(url, resp):
     '''
     This function needs to return a list of urls that are scraped from the response. 
     These urls will be added to the Frontier and retrieved from the cache. 
     These urls have to be filtered so that urls that do not have to be downloaded are not added to the frontier.
     '''
-    # robot.txt => check if you have permission to crawl, if no permission, return []
-    #have can_crawl function here. check if you have persmission to crawl. if no permission, return []. else continue with the below code
+    if resp.status != 200  or len(url) > 150 or not check_crawl_persmission(url): # return [] if err or lenght of the url greater than 150, then its most likely a trap.
+        return []   
     
     links = extract_next_links(url, resp)
     res = [link for link in links if is_valid(link)]
@@ -81,15 +88,12 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content'''
-    if resp.status != 200 and  url not in visitted_urls: #if err, then return empty list
-        return []   
     
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
     links = soup.find_all('a', href=True) #all the links from the html content
     text_content = soup.get_text()
     
     if not text_content: #if there is no content in the site, we dont want to crawl it. 
-        visitted_urls.add(url) #NOT SURE IF WE SHOULD DO THIS. WE DON'T WANNA REVIST THIS SITE FS FS BUT WE ALSO DON'T WANNA CRAWL THIS. IF WE DO THIS, DOES THAT MEAN WE CRAWL THIS PAGE?
         return []        
     # tokenized_sites[url] = tokenizer(text_content)
 
@@ -108,7 +112,6 @@ def extract_next_links(url, resp):
             urls.append(cur_link) #http is not missing, url is absolute absolute
         else:
             urls.append(url+cur_link) #relative link, combine cur_link with url
-    visitted_urls.add(url)
     if 'ics.uci.edu' in url and url not in ics_subdomains:
         ics_subdomains.add(url)
     # print('URL LIST: ', urls)
