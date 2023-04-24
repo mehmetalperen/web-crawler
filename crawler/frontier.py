@@ -49,9 +49,12 @@ class Frontier(object):
             f"total urls discovered.")
 
     def get_tbd_url(self):
-        time.sleep(self.config.time_delay)               # wait 0.5 sec to be polite, value in config.ini file (check utils --> config.py)
-        if not self.to_be_downloaded.empty():            # queue of urls cannot be empty
-            return self.to_be_downloaded.get()           # dequeue (faster than for lists)
+        try:
+            time.sleep(self.config.time_delay)               # wait 0.5 sec to be polite, value in config.ini file (check utils --> config.py)
+            if not self.to_be_downloaded.empty():            # queue of urls cannot be empty
+                return self.to_be_downloaded.get()           # dequeue (faster than for lists)
+        except IndexError:
+            return None
 
     def add_url(self, url):
         url = normalize(url)
