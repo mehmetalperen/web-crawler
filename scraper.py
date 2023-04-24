@@ -8,7 +8,7 @@ import  re
 # recives string of text and returns a map with the 
 # english nonStopwords and their frequency
 # based on code from Cole Hajek's CS 121 assignment 1
-def removeStopWords(string):
+def tokenizer(string):
     from nltk.corpus import stopwords
     sWords = set(stopwords.words('english'))        #set up set of all english stop words
 
