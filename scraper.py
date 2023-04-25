@@ -31,14 +31,20 @@ def tokenizer(page_text_content):
     return tokens
 
 def count_tokens(tokens):
-    counter = {}
+    with shelve.open("allcontent.shelve") as db:
+        if 'count_all' not in db:
+            db['count_all'] = {}
+            
+        # for token in tokens:
+
+        #     if token not in db['count_all']:
+        #         db['count_all'][token] = 1
+        #         print('db[token]', db['count_all'][token])
+        #     else:
+        #         print('db[token]', db['count_all'][token])
+        #         db[token] += 1
+    db.close()
     
-    for token in tokens:
-        if token in counter:
-            counter[token] += 1
-        else:
-            counter[token] = 1
-    return counter
 
 def find_longest_page():
     longet_page_url = ''
@@ -107,29 +113,26 @@ def extract_next_links(url, resp):
         return []        
     # tokenized_sites[url] = tokenizer(text_content)
     
-    with shelve.open("tokenized.shelve") as db:
+    tokens = tokenizer(text_content)
+    count_tokens(tokens)
     # Access the data in the shelve file
                 
-        urls = []
-        # print('URL: ', url)
-        for link in links:
-            cur_link = link['href']
-            if 'mailto:' in cur_link:
-                continue
-            if '#' in cur_link: #if fragment found, remove the fragment part
-                cur_link= cur_link[:cur_link.index('#')]
+    urls = []
+    # print('URL: ', url)
+    for link in links:
+        cur_link = link['href']
+        if 'mailto:' in cur_link:
+            continue
+        if '#' in cur_link: #if fragment found, remove the fragment part
+            cur_link= cur_link[:cur_link.index('#')]
+        
+        if is_absolute_url(cur_link):
+            if '//' == cur_link[0:2]: # add http if missing
+                cur_link = 'http:'+cur_link
+            urls.append(cur_link) #http is not missing, url is absolute absolute
+        else:
+            urls.append(url+cur_link) #relative link, combine cur_link with url
             
-            if is_absolute_url(cur_link):
-                if '//' == cur_link[0:2]: # add http if missing
-                    cur_link = 'http:'+cur_link
-                urls.append(cur_link) #http is not missing, url is absolute absolute
-            else:
-                urls.append(url+cur_link) #relative link, combine cur_link with url
-
-        if url not in db:
-            db[url] = count_tokens(tokenizer(text_content))
-        print(url, db[url])
-        # print('URL LIST: ', urls)
         return urls
     
 def is_valid_domain(netloc):

@@ -37,11 +37,15 @@ class Worker(Thread):
             time.sleep(self.config.time_delay)
         
         amount_ics_domain = 0
-        for url in self.frontier.tokenize:
-            if 'ics.uci.edu' in url:
+        amount_unique_page_visited = 0
+        for url_hash in self.frontier.save:
+            if 'ics.uci.edu' in self.frontier.save[url_hash][0]:# self.frontier = { url_hash = (url, is_visited)}
                 amount_ics_domain += 1
+            if self.frontier.save[url_hash][1]:
+                amount_unique_page_visited += 1
             
-        print(len(self.frontier.save), ' unique pages found.')
+        print(len(self.frontier.save), ' unique URLs found.')
+        print(amount_unique_page_visited, ' unique pages visited.')
         print(amount_ics_domain, ' subdomain of isc.uci.edu found')
         
         

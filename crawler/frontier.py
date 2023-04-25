@@ -13,7 +13,7 @@ class Frontier(object):
         self.logger = get_logger("FRONTIER")
         self.config = config
         self.to_be_downloaded = Queue()              # add urls to this queue
-        
+ 
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
             self.logger.info(
@@ -25,20 +25,33 @@ class Frontier(object):
                 f"Found save file {self.config.save_file}, deleting it.")
             os.remove(self.config.save_file)
             
-        if not os.path.exists('tokenzied.shelve') and not restart:
+        if not os.path.exists(self.config.allcontent) and not restart:
             # Save file does not exist, but request to load save.
             self.logger.info(
-                f"Did not find save file {self.config.save_file}, "
+                f"Did not find save file {self.config.allcontent}, "
                 f"starting from seed.")
-        elif os.path.exists('tokenzied.shelve') and restart:
+        elif os.path.exists(self.config.allcontent) and restart:
             # Save file does exists, but request to start from seed.
             self.logger.info(
-                f"Found save file {self.config.save_file}, deleting it.")
-            os.remove('tokenzied.shelve')
+                f"Found save file {self.config.allcontent}, deleting it.")
+            
+        if not os.path.exists('largest_page.shelve') and not restart:
+            # Save file does not exist, but request to load save.
+            self.logger.info(
+                f"Did not find save file {'largest_page.shelve'}, "
+                f"starting from seed.")
+        elif os.path.exists('largest_page.shelve') and restart:
+            # Save file does exists, but request to start from seed.
+            self.logger.info(
+                f"Found save file {'largest_page.shelve'}, deleting it.")
+            os.remove('largest_page.shelve')
+
         # Load existing save file, or create one if it does not exist.
         self.save = shelve.open(self.config.save_file)                      # save file = frontier.shelve (dictionary-like object)
-        self.save = shelve.open('tokenzied.shelve')                      # save file = frontier.shelve (dictionary-like object)
-        
+        self.largest_page = shelve.open("largest_page.shelve")
+        self.largest_page.close()
+        self.all_content = shelve.open(self.config.allcontent)
+        self.all_content.close()
         if restart:
             for url in self.config.seed_urls:
                 self.add_url(url)
