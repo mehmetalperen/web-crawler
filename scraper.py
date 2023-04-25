@@ -3,9 +3,10 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import validators
 from stop_words import get_stop_words
-import urllib.robotparser as urobot
+from urllib import robotparser
 import shelve
 import os
+from urllib.parse import urljoin
 
 stop_words = set(get_stop_words('en'))
 tokenized_sites = {} # site_url : [] #list of tokens found in that site => for question 2 and 3
@@ -22,7 +23,7 @@ def tokenizer(page_text_content):
             cur_word += ch.lower() #convert that ch to lower case and add it to the cur_word
         elif cur_word in stop_words:
             cur_word = ""        
-        elif len(cur_word) > 1: #we do not want single charecters. for example James's would give us "James" and "s" if we dont do this 
+        else: #len(cur_word) > 1: #we do not want single charecters. for example James's would give us "James" and "s" if we dont do this 
             tokens.append(cur_word) # add cur word to token list 
             cur_word = "" #reset cur_word
             
@@ -31,18 +32,12 @@ def tokenizer(page_text_content):
     return tokens
 
 def count_tokens(tokens):
-    with shelve.open("allcontent.shelve") as db:
-        if 'count_all' not in db:
-            db['count_all'] = {}
-            
-        # for token in tokens:
-
-        #     if token not in db['count_all']:
-        #         db['count_all'][token] = 1
-        #         print('db[token]', db['count_all'][token])
-        #     else:
-        #         print('db[token]', db['count_all'][token])
-        #         db[token] += 1
+    with shelve.open("wordCount.shelve") as db:
+        for token in tokens:
+            if token in db:
+                db[token] += 1
+            else:
+                db[token] = 1
     db.close()
     
 
@@ -71,10 +66,10 @@ def common_words():
     return most_common_words[0:50]
         
 def check_crawl_persmission(url):
-    rp = urobot.RobotFileParser()
-    rp.set_url(url + "/robots.txt")
+    rp = robotparser.RobotFileParser()
+    rp.set_url(urljoin(url, '/robots.txt'))
     rp.read()
-    return rp.can_fetch("*", url)
+    return rp.can_fetch('*', url)
 
 def scraper(url, resp):
     '''
@@ -111,10 +106,8 @@ def extract_next_links(url, resp):
     
     if not text_content: #if there is no content in the site, we dont want to crawl it. 
         return []        
-    # tokenized_sites[url] = tokenizer(text_content)
     
-    tokens = tokenizer(text_content)
-    count_tokens(tokens)
+    count_tokens(tokenizer(text_content))
     # Access the data in the shelve file
                 
     urls = []
@@ -133,7 +126,7 @@ def extract_next_links(url, resp):
         else:
             urls.append(url+cur_link) #relative link, combine cur_link with url
             
-        return urls
+    return urls
     
 def is_valid_domain(netloc):
     netloc = netloc.lower()
