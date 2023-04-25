@@ -24,8 +24,21 @@ class Frontier(object):
             self.logger.info(
                 f"Found save file {self.config.save_file}, deleting it.")
             os.remove(self.config.save_file)
+            
+        if not os.path.exists('tokenzied.shelve') and not restart:
+            # Save file does not exist, but request to load save.
+            self.logger.info(
+                f"Did not find save file {self.config.save_file}, "
+                f"starting from seed.")
+        elif os.path.exists('tokenzied.shelve') and restart:
+            # Save file does exists, but request to start from seed.
+            self.logger.info(
+                f"Found save file {self.config.save_file}, deleting it.")
+            os.remove('tokenzied.shelve')
         # Load existing save file, or create one if it does not exist.
         self.save = shelve.open(self.config.save_file)                      # save file = frontier.shelve (dictionary-like object)
+        self.save = shelve.open('tokenzied.shelve')                      # save file = frontier.shelve (dictionary-like object)
+        
         if restart:
             for url in self.config.seed_urls:
                 self.add_url(url)

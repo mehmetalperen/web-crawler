@@ -12,6 +12,7 @@ class Worker(Thread):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
         self.config = config
         self.frontier = frontier
+        
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
         assert {getsource(scraper).find(req) for req in {"from urllib.request import", "import urllib.request"}} == {-1}, "Do not use urllib.request in scraper.py"
@@ -23,6 +24,8 @@ class Worker(Thread):
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
+            for i in self.frontier.save:
+                print(i, ' => ', self.frontier.save[i])
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
@@ -32,3 +35,13 @@ class Worker(Thread):
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)
+        
+        amount_ics_domain = 0
+        for url in self.frontier.tokenize:
+            if 'ics.uci.edu' in url:
+                amount_ics_domain += 1
+            
+        print(len(self.frontier.save), ' unique pages found.')
+        print(amount_ics_domain, ' subdomain of isc.uci.edu found')
+        
+        

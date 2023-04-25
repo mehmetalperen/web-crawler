@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 import validators
 from stop_words import get_stop_words
 import urllib.robotparser as urobot
-
+import shelve
+import os
 
 stop_words = set(get_stop_words('en'))
 tokenized_sites = {} # site_url : [] #list of tokens found in that site => for question 2 and 3
@@ -28,6 +29,16 @@ def tokenizer(page_text_content):
     if cur_word and cur_word not in stop_words: #if cur_word is not empty, we need to add it to the list bc we do not wanna skip the last word unadded
         tokens.append(cur_word)
     return tokens
+
+def count_tokens(tokens):
+    counter = {}
+    
+    for token in tokens:
+        if token in counter:
+            counter[token] += 1
+        else:
+            counter[token] = 1
+    return counter
 
 def find_longest_page():
     longet_page_url = ''
@@ -95,26 +106,31 @@ def extract_next_links(url, resp):
     if not text_content: #if there is no content in the site, we dont want to crawl it. 
         return []        
     # tokenized_sites[url] = tokenizer(text_content)
+    
+    with shelve.open("tokenized.shelve") as db:
+    # Access the data in the shelve file
+                
+        urls = []
+        # print('URL: ', url)
+        for link in links:
+            cur_link = link['href']
+            if 'mailto:' in cur_link:
+                continue
+            if '#' in cur_link: #if fragment found, remove the fragment part
+                cur_link= cur_link[:cur_link.index('#')]
+            
+            if is_absolute_url(cur_link):
+                if '//' == cur_link[0:2]: # add http if missing
+                    cur_link = 'http:'+cur_link
+                urls.append(cur_link) #http is not missing, url is absolute absolute
+            else:
+                urls.append(url+cur_link) #relative link, combine cur_link with url
 
-    urls = []
-    # print('URL: ', url)
-    for link in links:
-        cur_link = link['href']
-        if 'mailto:' in cur_link:
-            continue
-        if '#' in cur_link: #if fragment found, remove the fragment part
-            cur_link= cur_link[:cur_link.index('#')]
-        
-        if is_absolute_url(cur_link):
-            if '//' == cur_link[0:2]: # add http if missing
-                cur_link = 'http:'+cur_link
-            urls.append(cur_link) #http is not missing, url is absolute absolute
-        else:
-            urls.append(url+cur_link) #relative link, combine cur_link with url
-    if 'ics.uci.edu' in url and url not in ics_subdomains:
-        ics_subdomains.add(url)
-    # print('URL LIST: ', urls)
-    return urls
+        if url not in db:
+            db[url] = count_tokens(tokenizer(text_content))
+        print(url, db[url])
+        # print('URL LIST: ', urls)
+        return urls
     
 def is_valid_domain(netloc):
     netloc = netloc.lower()
