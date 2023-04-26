@@ -14,7 +14,7 @@ ics_subdomains = set() #for question 5
 '''
 check the classes to avoid global variables
 '''
-def tokenizer(page_text_content):
+def tokenizer(page_text_content, url):
     tokens = []
     
     cur_word = ""
@@ -29,11 +29,20 @@ def tokenizer(page_text_content):
             
     if cur_word and cur_word not in stop_words: #if cur_word is not empty, we need to add it to the list bc we do not wanna skip the last word unadded
         tokens.append(cur_word)
+    with shelve.open("largest_page.shelve") as db:
+        if 'largest_site' in db:
+            if db['largest_site'][1] > len(tokens):
+                db['largest_site'] = (url,len(tokens))
+        else:
+            db['largest_site'] = (url,len(tokens))
+    db.close()
     return tokens
 
 def count_tokens(tokens):
     with shelve.open("wordCount.shelve") as db:
         for token in tokens:
+            if not token:
+                continue
             if token in db:
                 db[token] += 1
             else:
@@ -107,7 +116,7 @@ def extract_next_links(url, resp):
     if not text_content: #if there is no content in the site, we dont want to crawl it. 
         return []        
     
-    count_tokens(tokenizer(text_content))
+    count_tokens(tokenizer(text_content, url))
     # Access the data in the shelve file
                 
     urls = []
