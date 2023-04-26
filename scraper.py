@@ -37,15 +37,19 @@ def tokenizer(page_text_content):
 
 counter = {}
 def count_tokens(tokens):
-    #thisPageCounter = {}
+    localCounter = {}
     for words in tokens:
+
+        if words in localCounter:
+            localCounter[words] +=1
+        else:
+            localCounter[words] = 1
+        
         if words in counter:
             counter[words] += 1
-            #thisPageCounter[words] += 1
         else:
             counter[words] = 1
-           # thisPageCounter[words] =1
-    return counter
+    return localCounter
 
 def topFifty():
     fiftyMostCommonWords = {}
@@ -55,7 +59,7 @@ def topFifty():
         fiftyMostCommonWords = {largest_key: largest_value}
     return fiftyMostCommonWords
 
-
+'''
 #creates file if it doesnt alread exist, then outputs data to the report file.
 def writeReport():
     create_file()
@@ -87,7 +91,7 @@ def writeUniquePages(uniquePages):
     for pages in uniquePages:
         ct += 1
 
-
+'''
 
 
 def find_longest_page():
