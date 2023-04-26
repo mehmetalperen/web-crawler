@@ -5,16 +5,15 @@ import validators
 from stop_words import get_stop_words
 from urllib import robotparser
 import shelve
-import os
 from urllib.parse import urljoin
+import hashlib
+from simhash import Simhash
 
 stop_words = set(get_stop_words('en'))
-tokenized_sites = {} # site_url : [] #list of tokens found in that site => for question 2 and 3
-ics_subdomains = set() #for question 5
 '''
 check the classes to avoid global variables
 '''
-def tokenizer(page_text_content, url):
+def tokenizer(page_text_content):
     tokens = []
     
     cur_word = ""
@@ -29,13 +28,6 @@ def tokenizer(page_text_content, url):
             
     if cur_word and cur_word not in stop_words: #if cur_word is not empty, we need to add it to the list bc we do not wanna skip the last word unadded
         tokens.append(cur_word)
-    with shelve.open("largest_page.shelve") as db:
-        if 'largest_site' in db:
-            if db['largest_site'][1] > len(tokens):
-                db['largest_site'] = (url,len(tokens))
-        else:
-            db['largest_site'] = (url,len(tokens))
-    db.close()
     return tokens
 
 def count_tokens(tokens):
@@ -48,38 +40,38 @@ def count_tokens(tokens):
             else:
                 db[token] = 1
     db.close()
-    
 
-def find_longest_page():
-    longet_page_url = ''
-    longet_page_len = 0
-    for site_url in tokenized_sites:
-        if len(tokenized_sites[site_url]) > longet_page_len:
-            longet_page_url = site_url
-            longet_page_len = len(tokenized_sites[site_url])
-            
-    return longet_page_url
+def is_longest_page(url, tokens):
+    with shelve.open("largest_page.shelve") as db:
+        if 'largest_site' in db:
+            if db['largest_site'][1] > len(tokens):
+                db['largest_site'] = (url,len(tokens))
+        else:
+            db['largest_site'] = (url,len(tokens))
+    db.close()
 
 
-def common_words():
-    counter = {}
-    for site_url in tokenized_sites:
-        for word in tokenized_sites[site_url]:
-            if word not in counter:
-                counter[word] = 1
-            else:
-                counter[word] += 1
-                
-    most_common_words = sorted(counter.items(), key=lambda el: (-el[1], el[0]), reverse=False)#Source: https://stackoverflow.com/questions/1915564/python-convert-a-dictionary-to-a-sorted-list-by-value-instead-of-key
-
-    return most_common_words[0:50]
-        
 def check_crawl_persmission(url):
     rp = robotparser.RobotFileParser()
     rp.set_url(urljoin(url, '/robots.txt'))
     rp.read()
     return rp.can_fetch('*', url)
 
+def is_absolute_url(url):
+    return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
+
+def is_valid_domain(netloc):
+    netloc = netloc.lower()
+    return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
+
+
+def calculate_page_fingerprint(text_content):
+    # first web scrape a website for all text in body tags
+    # create fingerprint hash using all the text
+    hash_method = hashlib.md5()
+    text_content_bytes = text_content.encode('utf-8')  # encode string as bytes
+    hash_method.update(text_content_bytes)
+    return hash_method.hexdigest()
 def scraper(url, resp):
     '''
     This function needs to return a list of urls that are scraped from the response. 
@@ -94,9 +86,26 @@ def scraper(url, resp):
     return res 
 
 
-def is_absolute_url(url):
-    return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
+def soup_and_soupText(resp):
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
+    return (soup, soup.get_text())
+    
+def is_trap(finger_print):
+    with shelve.open("hash_values.shelve") as db:
+        if "hash_values" in db:
+            for other_finger_print in db['hash_values']:
+                similarity = Simhash(finger_print).distance(Simhash(other_finger_print))
+                if similarity < 10:
+                    db['hash_values'].append(finger_print)
+                    db.close()
+                    return True
+        else:
+            db['hash_values'] = []
+            
+        db['hash_values'].append(finger_print)
+    db.close()
+    return False
 def extract_next_links(url, resp):
     '''
     # Implementation required.
@@ -109,18 +118,22 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content'''
     
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
+    soup, text_content = soup_and_soupText(resp)
     links = soup.find_all('a', href=True) #all the links from the html content
     text_content = soup.get_text()
     
     if not text_content: #if there is no content in the site, we dont want to crawl it. 
         return []        
+    finger_print = calculate_page_fingerprint(text_content)
     
-    count_tokens(tokenizer(text_content, url))
-    # Access the data in the shelve file
+    if is_trap(finger_print):
+        return []
+    
+    tokens = tokenizer(text_content)
+    count_tokens(tokens)
+    is_longest_page(url, tokens)
                 
     urls = []
-    # print('URL: ', url)
     for link in links:
         cur_link = link['href']
         if 'mailto:' in cur_link:
@@ -137,9 +150,6 @@ def extract_next_links(url, resp):
             
     return urls
     
-def is_valid_domain(netloc):
-    netloc = netloc.lower()
-    return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
 def is_valid(url):
     """
     # Decide whether to crawl this url or not. 
