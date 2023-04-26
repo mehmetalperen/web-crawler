@@ -6,6 +6,7 @@ from utils import get_logger
 import scraper
 import time
 import shelve
+import os
 
 class Worker(Thread):
     def __init__(self, worker_id, config, frontier):
@@ -46,27 +47,39 @@ class Worker(Thread):
 
     def get_report(self):
         print('===================GET_REPORT====================')
+        filename = 'REPORT.txt'
+
+        if os.path.isfile(filename):
+            os.remove(filename)
+
+        with open(filename, 'w') as file:
+            
+            with shelve.open("largest_page.shelve") as db:
+                file.write('Largest website is :' ,str(db['largest_site']) + '\n') #(url, len)
+            db.close()
+            
+            file.write('50 most common words are: '+ '\n')
+            
+            with shelve.open("wordCount.shelve") as db: #{words: amount_seen}
+                ranked_list = sorted(db.items(), key=lambda el: (-el[1], el[0]), reverse=False)
+                for word in ranked_list[:50]:
+                    file.write(str(word) + ' ')
+            db.close()
+            file.write('\n')
+            
         amount_ics_domain = 0
         amount_unique_page_visited = 0
-        for url_hash in self.frontier.save:
+        for url_hash in self.frontier.save: #hash_url = (url, is_visited)
             if 'ics.uci.edu' in self.frontier.save[url_hash][0]:# self.frontier = { url_hash = (url, is_visited)}
                 amount_ics_domain += 1
             if self.frontier.save[url_hash][1]:
                 amount_unique_page_visited += 1
         
-        print(len(self.frontier.save), ' unique URLs found.')
-        print(amount_unique_page_visited, ' unique pages visited.')
         
-        with shelve.open("largest_page.shelve") as db:
-            print('Largest website is :' ,db['largest_site'])
-        db.close()
-        
-        with shelve.open("wordCount.shelve") as db:
-            ranked_list = sorted(db.items(), key=lambda el: (-el[1], el[0]), reverse=False)
-            print('50 most common words are: ', ranked_list[:50])
-        db.close()
-        
-        print(amount_ics_domain, ' subdomain of isc.uci.edu found')
+        file.write(str(len(self.frontier.save)), ' unique URLs found.\n')
+        file.write(str(amount_unique_page_visited), ' unique pages visited.\n')
+        file.write(str(amount_ics_domain), ' subdomain of isc.uci.edu found\n')
+        file.close()
         print('===================DONE====================')
     
     def run(self):

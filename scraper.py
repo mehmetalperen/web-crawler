@@ -22,9 +22,11 @@ def tokenizer(page_text_content):
             cur_word += ch.lower() #convert that ch to lower case and add it to the cur_word
         elif cur_word in stop_words:
             cur_word = ""        
-        else: #len(cur_word) > 1: #we do not want single charecters. for example James's would give us "James" and "s" if we dont do this 
+        elif len(cur_word) > 1: #we do not want single charecters. for example James's would give us "James" and "s" if we dont do this 
             tokens.append(cur_word) # add cur word to token list 
             cur_word = "" #reset cur_word
+        else:
+            cur_word = ''
             
     if cur_word and cur_word not in stop_words: #if cur_word is not empty, we need to add it to the list bc we do not wanna skip the last word unadded
         tokens.append(cur_word)
@@ -42,9 +44,9 @@ def count_tokens(tokens):
     db.close()
 
 def is_longest_page(url, tokens):
-    with shelve.open("largest_page.shelve") as db:
+    with shelve.open("largest_page.shelve") as db: #largest_site = (url, len)
         if 'largest_site' in db:
-            if db['largest_site'][1] > len(tokens):
+            if db['largest_site'][1] < len(tokens):
                 db['largest_site'] = (url,len(tokens))
         else:
             db['largest_site'] = (url,len(tokens))
@@ -78,7 +80,7 @@ def scraper(url, resp):
     These urls will be added to the Frontier and retrieved from the cache. 
     These urls have to be filtered so that urls that do not have to be downloaded are not added to the frontier.
     '''
-    if resp.status != 200  or len(url) > 150 or not check_crawl_persmission(url): # return [] if err or lenght of the url greater than 150, then its most likely a trap.
+    if resp.status != 200 or not resp.raw_response.content or len(url) > 200 or not check_crawl_persmission(url): # return [] if err or lenght of the url greater than 150, then its most likely a trap.
         return []   
     
     links = extract_next_links(url, resp)
@@ -119,11 +121,11 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content'''
     
     soup, text_content = soup_and_soupText(resp)
+    if not text_content: #if there is no content in the site, we dont want to crawl it. 
+        return []        
     links = soup.find_all('a', href=True) #all the links from the html content
     text_content = soup.get_text()
     
-    if not text_content: #if there is no content in the site, we dont want to crawl it. 
-        return []        
     finger_print = calculate_page_fingerprint(text_content)
     
     if is_trap(finger_print):
