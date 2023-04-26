@@ -6,6 +6,8 @@ from stop_words import get_stop_words
 from urllib import robotparser
 import shelve
 from urllib.parse import urljoin
+import hashlib
+from simhash import Simhash
 
 stop_words = set(get_stop_words('en'))
 '''
@@ -55,6 +57,21 @@ def check_crawl_persmission(url):
     rp.read()
     return rp.can_fetch('*', url)
 
+def is_absolute_url(url):
+    return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
+
+def is_valid_domain(netloc):
+    netloc = netloc.lower()
+    return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
+
+
+def calculate_page_fingerprint(text_content):
+    # first web scrape a website for all text in body tags
+    # create fingerprint hash using all the text
+    hash_method = hashlib.md5()
+    text_content_bytes = text_content.encode('utf-8')  # encode string as bytes
+    hash_method.update(text_content_bytes)
+    return hash_method.hexdigest()
 def scraper(url, resp):
     '''
     This function needs to return a list of urls that are scraped from the response. 
@@ -69,9 +86,26 @@ def scraper(url, resp):
     return res 
 
 
-def is_absolute_url(url):
-    return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
+def soup_and_soupText(resp):
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
+    return (soup, soup.get_text())
+    
+def is_trap(finger_print):
+    with shelve.open("hash_values.shelve") as db:
+        if "hash_values" in db:
+            for other_finger_print in db['hash_values']:
+                similarity = Simhash(finger_print).distance(Simhash(other_finger_print))
+                if similarity < 10:
+                    db['hash_values'].append(finger_print)
+                    db.close()
+                    return True
+        else:
+            db['hash_values'] = []
+            
+        db['hash_values'].append(finger_print)
+    db.close()
+    return False
 def extract_next_links(url, resp):
     '''
     # Implementation required.
@@ -84,12 +118,16 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content'''
     
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
+    soup, text_content = soup_and_soupText(resp)
     links = soup.find_all('a', href=True) #all the links from the html content
     text_content = soup.get_text()
     
     if not text_content: #if there is no content in the site, we dont want to crawl it. 
         return []        
+    finger_print = calculate_page_fingerprint(text_content)
+    
+    if is_trap(finger_print):
+        return []
     
     tokens = tokenizer(text_content)
     count_tokens(tokens)
@@ -112,9 +150,6 @@ def extract_next_links(url, resp):
             
     return urls
     
-def is_valid_domain(netloc):
-    netloc = netloc.lower()
-    return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
 def is_valid(url):
     """
     # Decide whether to crawl this url or not. 

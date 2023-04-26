@@ -20,7 +20,7 @@ class Worker(Thread):
         
     def show_what_you_have(self):
         #This function is only for testing purposes
-        print('===================PRINTING====================')
+        print('===================PRINT_TESTING====================')
         amount_ics_domain = 0
         amount_unique_page_visited = 0
         for url_hash in self.frontier.save:

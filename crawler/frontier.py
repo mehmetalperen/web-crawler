@@ -46,6 +46,17 @@ class Frontier(object):
                 f"Found save file {'largest_page.shelve'}, deleting it.")
             os.remove('largest_page.shelve')
         #--------------------------------
+        if not os.path.exists('hash_values.shelve') and not restart:
+            # Save file does not exist, but request to load save.
+            self.logger.info(
+                f"Did not find save file {'hash_values.shelve'}, "
+                f"starting from seed.")
+        elif os.path.exists('hash_values.shelve') and restart:
+            # Save file does exists, but request to start from seed.
+            self.logger.info(
+                f"Found save file {'hash_values.shelve'}, deleting it.")
+            os.remove('hash_values.shelve')
+            #-------------------------
         self.save = shelve.open(self.config.save_file)                      # save file = frontier.shelve (dictionary-like object)
         
         if restart:
