@@ -14,7 +14,7 @@ ics_subdomains = set() #for question 5
 '''
 check the classes to avoid global variables
 '''
-def tokenizer(page_text_content, url):
+def tokenizer(page_text_content):
     tokens = []
     
     cur_word = ""
@@ -29,13 +29,6 @@ def tokenizer(page_text_content, url):
             
     if cur_word and cur_word not in stop_words: #if cur_word is not empty, we need to add it to the list bc we do not wanna skip the last word unadded
         tokens.append(cur_word)
-    with shelve.open("largest_page.shelve") as db:
-        if 'largest_site' in db:
-            if db['largest_site'][1] > len(tokens):
-                db['largest_site'] = (url,len(tokens))
-        else:
-            db['largest_site'] = (url,len(tokens))
-    db.close()
     return tokens
 
 def count_tokens(tokens):
@@ -48,32 +41,17 @@ def count_tokens(tokens):
             else:
                 db[token] = 1
     db.close()
-    
 
-def find_longest_page():
-    longet_page_url = ''
-    longet_page_len = 0
-    for site_url in tokenized_sites:
-        if len(tokenized_sites[site_url]) > longet_page_len:
-            longet_page_url = site_url
-            longet_page_len = len(tokenized_sites[site_url])
-            
-    return longet_page_url
+def is_longest_page(url, tokens):
+    with shelve.open("largest_page.shelve") as db:
+        if 'largest_site' in db:
+            if db['largest_site'][1] > len(tokens):
+                db['largest_site'] = (url,len(tokens))
+        else:
+            db['largest_site'] = (url,len(tokens))
+    db.close()
 
 
-def common_words():
-    counter = {}
-    for site_url in tokenized_sites:
-        for word in tokenized_sites[site_url]:
-            if word not in counter:
-                counter[word] = 1
-            else:
-                counter[word] += 1
-                
-    most_common_words = sorted(counter.items(), key=lambda el: (-el[1], el[0]), reverse=False)#Source: https://stackoverflow.com/questions/1915564/python-convert-a-dictionary-to-a-sorted-list-by-value-instead-of-key
-
-    return most_common_words[0:50]
-        
 def check_crawl_persmission(url):
     rp = robotparser.RobotFileParser()
     rp.set_url(urljoin(url, '/robots.txt'))
@@ -116,7 +94,9 @@ def extract_next_links(url, resp):
     if not text_content: #if there is no content in the site, we dont want to crawl it. 
         return []        
     
-    count_tokens(tokenizer(text_content, url))
+    tokens = tokenizer(text_content)
+    count_tokens(tokens)
+    is_longest_page(url, tokens)
     # Access the data in the shelve file
                 
     urls = []
