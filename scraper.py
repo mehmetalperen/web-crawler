@@ -5,12 +5,9 @@ import validators
 from stop_words import get_stop_words
 from urllib import robotparser
 import shelve
-import os
 from urllib.parse import urljoin
 
 stop_words = set(get_stop_words('en'))
-tokenized_sites = {} # site_url : [] #list of tokens found in that site => for question 2 and 3
-ics_subdomains = set() #for question 5
 '''
 check the classes to avoid global variables
 '''
@@ -97,10 +94,8 @@ def extract_next_links(url, resp):
     tokens = tokenizer(text_content)
     count_tokens(tokens)
     is_longest_page(url, tokens)
-    # Access the data in the shelve file
                 
     urls = []
-    # print('URL: ', url)
     for link in links:
         cur_link = link['href']
         if 'mailto:' in cur_link:
