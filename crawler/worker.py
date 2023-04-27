@@ -55,8 +55,9 @@ class Worker(Thread):
         with open(filename, 'w') as file:
             
             with shelve.open("largest_page.shelve") as db:
-                file.write('Largest website is :' ,str(db['largest_site']) + '\n') #(url, len)
-                print('Largest website is :' ,str(db['largest_site']) + '\n')
+                str_res = 'Largest website is :' + str(db['largest_site']) + '\n'
+                file.write(str_res) #(url, len)
+                print(str_res)
             db.close()
             
             file.write('50 most common words are: '+ '\n')
@@ -64,28 +65,49 @@ class Worker(Thread):
             with shelve.open("wordCount.shelve") as db: #{words: amount_seen}
                 ranked_list = sorted(db.items(), key=lambda el: (-el[1], el[0]), reverse=False)
                 for word in ranked_list[:50]:
-                    file.write(str(word) + ' ')
+                    str_write = str(word) + ' '
+                    file.write(str_write)
                 print(ranked_list, '\n')
             db.close()
             file.write('\n')
             
-        amount_ics_domain = 0
         amount_unique_page_visited = 0
+        ics_domain_dic = {}
+        
         for url_hash in self.frontier.save: #hash_url = (url, is_visited)
-            if 'ics.uci.edu' in self.frontier.save[url_hash][0]:# self.frontier = { url_hash = (url, is_visited)}
-                amount_ics_domain += 1
-            if self.frontier.save[url_hash][1]:
+            cur_url = self.frontier.save[url_hash][0] #self.frontier = { url_hash = ('http://vision.ics.uci.edu/about', True)}
+            url_parts = [part for part in cur_url.split('/') if part] # url_parts will be something like this ['http:', 'vision.ics.uci.edu', 'about']
+            is_url_visited = self.frontier.save[url_hash][1]
+            
+            if len(url_parts) <= 1: #just to be safe
+                continue
+            key_domain = url_parts[1] # ['http:', 'vision.ics.uci.edu', 'about'][1] => 'vision.ics.uci.edu'
+            
+            if 'ics.uci.edu' in key_domain and is_url_visited:
+                if key_domain in ics_domain_dic:
+                    ics_domain_dic[key_domain] += 1
+                else:
+                    ics_domain_dic[key_domain] = 1
+            if is_url_visited:
                 amount_unique_page_visited += 1
         
+        file.write(str(len(self.frontier.save)) + ' unique URLs found.\n')
+        print(str(len(self.frontier.save)) + ' unique URLs found.\n')
         
-        file.write(str(len(self.frontier.save)), ' unique URLs found.\n')
-        print(str(len(self.frontier.save)), ' unique URLs found.\n')
+        ics_domain_sorted = sorted(ics_domain_dic.items(), key=lambda el: el[0], reverse=False)
         
-        file.write(str(amount_unique_page_visited), ' unique pages visited.\n')
-        print(str(amount_unique_page_visited), ' unique pages visited.\n')
         
-        file.write(str(amount_ics_domain), ' subdomain of isc.uci.edu found\n')
-        print(str(amount_ics_domain), ' subdomain of isc.uci.edu found\n')
+        file.write(str(amount_unique_page_visited)+ ' unique pages visited.\n')
+        print(str(amount_unique_page_visited)+ ' unique pages visited.\n')
+        
+        write_ics_domain_len = str(len(ics_domain_dic)) + ' subdomain of isc.uci.edu found\n'
+        file.write(write_ics_domain_len)
+        print(write_ics_domain_len)
+        
+        for domain in ics_domain_sorted:
+            file.write(str(domain[0]) + ' seen ' + str(domain[1]) + ' times \n')
+            print(str(domain[0]) + ' seen ' + str(domain[1]) + ' times \n')
+            
         file.close()
         print('===================DONE====================')
     
