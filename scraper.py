@@ -6,7 +6,7 @@ from stop_words import get_stop_words
 from urllib import robotparser
 import shelve
 from urllib.parse import urljoin
-import hashlib
+#import hashlib
 from simhash import Simhash
 
 stop_words = set(get_stop_words('en'))
