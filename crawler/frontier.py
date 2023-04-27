@@ -12,8 +12,8 @@ class Frontier(object):
     def __init__(self, config, restart):
         self.logger = get_logger("FRONTIER")
         self.config = config
-        self.to_be_downloaded = Queue()              # add urls to this queue
- 
+        self.to_be_downloaded = Queue() # add urls to this queue
+        
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
             self.logger.info(
@@ -47,11 +47,7 @@ class Frontier(object):
             os.remove('largest_page.shelve')
 
         # Load existing save file, or create one if it does not exist.
-        self.save = shelve.open(self.config.save_file)                      # save file = frontier.shelve (dictionary-like object)
-        self.largest_page = shelve.open("largest_page.shelve")
-        self.largest_page.close()
-        self.all_content = shelve.open(self.config.allcontent)
-        self.all_content.close()
+        self.save = shelve.open(self.config.save_file) # save file = frontier.shelve (dictionary-like object)
         if restart:
             for url in self.config.seed_urls:
                 self.add_url(url)
