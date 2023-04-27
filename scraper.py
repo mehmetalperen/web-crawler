@@ -195,7 +195,6 @@ def extract_next_links(url, resp):
     is_longest_page(url, tokens) # find the longest page
                 
     urls = []
-    # print('URL: ', url)
     for link in links:
         cur_link = link['href'] # MEHMET WHAT IS THISSS ???
         if 'mailto:' in cur_link:

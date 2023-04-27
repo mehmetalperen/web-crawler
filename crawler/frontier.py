@@ -24,17 +24,17 @@ class Frontier(object):
             self.logger.info(
                 f"Found save file {self.config.save_file}, deleting it.")
             os.remove(self.config.save_file)
-            
-        if not os.path.exists(self.config.allcontent) and not restart:
+        #--------------------------------
+        if not os.path.exists(self.config.word_count) and not restart:
             # Save file does not exist, but request to load save.
             self.logger.info(
-                f"Did not find save file {self.config.allcontent}, "
+                f"Did not find save file {self.config.word_count}, "
                 f"starting from seed.")
-        elif os.path.exists(self.config.allcontent) and restart:
+        elif os.path.exists(self.config.word_count) and restart:
             # Save file does exists, but request to start from seed.
             self.logger.info(
-                f"Found save file {self.config.allcontent}, deleting it.")
-            
+                f"Found save file {self.config.word_count}, deleting it.")
+        #--------------------------------
         if not os.path.exists('largest_page.shelve') and not restart:
             # Save file does not exist, but request to load save.
             self.logger.info(
@@ -45,9 +45,20 @@ class Frontier(object):
             self.logger.info(
                 f"Found save file {'largest_page.shelve'}, deleting it.")
             os.remove('largest_page.shelve')
-
-        # Load existing save file, or create one if it does not exist.
-        self.save = shelve.open(self.config.save_file) # save file = frontier.shelve (dictionary-like object)
+        #--------------------------------
+        if not os.path.exists('hash_values.shelve') and not restart:
+            # Save file does not exist, but request to load save.
+            self.logger.info(
+                f"Did not find save file {'hash_values.shelve'}, "
+                f"starting from seed.")
+        elif os.path.exists('hash_values.shelve') and restart:
+            # Save file does exists, but request to start from seed.
+            self.logger.info(
+                f"Found save file {'hash_values.shelve'}, deleting it.")
+            os.remove('hash_values.shelve')
+            #-------------------------
+        self.save = shelve.open(self.config.save_file)                      # save file = frontier.shelve (dictionary-like object)
+        
         if restart:
             for url in self.config.seed_urls:
                 self.add_url(url)
