@@ -82,10 +82,11 @@ def getFP(tokens):
     
     for item in grams:
         hashNumber = threeGramHashNumber(item)
-        
         #only use some of the hashes (hashes with 0%4) to save memory
         if hashNumber % 4 == 0:
             mod4HashValues.append(hashNumber)
+
+        allHashValues.append(hashNumber)
 
     if len(mod4HashValues) == 0:
         return allHashValues
@@ -97,7 +98,7 @@ def areSimilar(set1, set2):
     intersection = set1.intersection(set2)
     union = set1.union(set2)
     similarity = len(intersection) / len(union)
-    if(similarity>0.9):
+    if(similarity>=0.92):
         return True
     else:
         return False
@@ -107,15 +108,19 @@ def areSimilar(set1, set2):
 #function to convert list of tokens into a list of n-grams (n=3)
 def get_3grams(tokens):
     if len(tokens) == 1:
-        tokens.append("2ndWordBuffer")
+        tokens.append("2ndwordbufferjust")
     if len(tokens) == 2:
-        tokens.append("3rdWordBuffer")
+        tokens.append("3rdwordbuffer")
     ngrams = []
         # create 3-grams using a sliding window of size 3
+    returnGrams =[]
     for i in range(len(tokens) - 2):
-        ngram = tokens[i:i+3]
-        ngrams.append(" ".join(ngram))
-    return ngrams
+        ngrams.append(tokens[i])
+        ngrams.append(tokens[i+1])
+        ngrams.append(tokens[i+2])
+        returnGrams.append(ngrams)
+        ngrams = []
+    return returnGrams
 '''hashing functions end here'''
 
 def calculate_page_fingerprint(text_content):
@@ -149,12 +154,11 @@ def is_trap(finger_print):
         if "hash_values" in db:
             for other_finger_print in db['hash_values']:
                 if areSimilar(finger_print,other_finger_print):
-                    db['hash_values'].append(finger_print)
+                    #db['hash_values'].append(finger_print)
                     db.close()
                     return True
         else:
             db['hash_values'] = []
-            
         db['hash_values'].append(finger_print)
     db.close()
     return False
