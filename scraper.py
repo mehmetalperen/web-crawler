@@ -83,7 +83,7 @@ def getFP(tokens):
     for item in grams:
         hashNumber = threeGramHashNumber(item)
         #only use some of the hashes (hashes with 0%4) to save memory
-        if hashNumber % 4 == 0:
+        if hashNumber % 13 == 0:
             mod4HashValues.append(hashNumber)
 
         allHashValues.append(hashNumber)
@@ -187,6 +187,7 @@ def extract_next_links(url, resp):
     text_content = soup.get_text() # get text from soup
     tokens = tokenizer(text_content) # tokenize the text
     finger_print = getFP(tokens) # get the fingerprint from the tokens
+    print(finger_print)
     
     if is_trap(finger_print): # compares fingerprints with each other
         return []
