@@ -1,0 +1,328 @@
+[33mcommit 332092e0f9079d9e531d1b404b9daf6f5a1ad5f6[m[33m ([m[1;36mHEAD -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m
+Merge: c722fe8 f28d447
+Author: Mehmet Nadi <31394639+mehmetalperen@users.noreply.github.com>
+Date:   Tue Apr 25 16:35:05 2023 -0700
+
+    Merge pull request #10 from mehmetalperen/mehmet_branch
+    
+    Mehmet branch
+
+[33mcommit f28d4477fe4418c7387d0502b8c50f94875b568c[m[33m ([m[1;31morigin/mehmet_branch[m[33m)[m
+Author: Mehmet A. Nadi <mnadi@circinus-25.ics.uci.edu>
+Date:   Tue Apr 25 16:28:18 2023 -0700
+
+    add wordCount shelve and also handle if largest_page.shelve deletetion. will work on finding the largest page
+
+[33mcommit 155e74b4086cc50528c280767bb839e380dccaed[m[33m ([m[1;32mmehmet_branch[m[33m, [m[1;32mlevi_branch[m[33m)[m
+Author: Mehmet A. Nadi <mnadi@circinus-95.ics.uci.edu>
+Date:   Tue Apr 25 15:18:59 2023 -0700
+
+    working on word counting thing. only pushed this bc levi wanted me to
+
+[33mcommit 2f102d4507b60f76522971138ab7545a3eaf8f27[m
+Author: Mehmet A. Nadi <mnadi@circinus-8.ics.uci.edu>
+Date:   Mon Apr 24 18:09:23 2023 -0700
+
+    add shelve for tokenzation and counting tokes for answering questions 1-4
+
+[33mcommit 17ed6b5656b3aa478f4fc6e37631286cbe833617[m
+Author: Mehmet A. Nadi <mnadi@circinus-2.ics.uci.edu>
+Date:   Mon Apr 24 15:01:20 2023 -0700
+
+    remove comment
+
+[33mcommit 427e8e162cf01c1f2922a379034ccd2a6a0a84c3[m
+Author: Mehmet A. Nadi <mnadi@circinus-2.ics.uci.edu>
+Date:   Mon Apr 24 15:00:22 2023 -0700
+
+    no need for wait for politeness here. its already implemented in worker.py
+
+[33mcommit d156858f8b9651e5cf28bb1907150c7417dafb08[m
+Author: Mehmet A. Nadi <mnadi@circinus-2.ics.uci.edu>
+Date:   Mon Apr 24 14:59:34 2023 -0700
+
+    add robot.txt file check
+
+[33mcommit 808111481747c21b2ee44854656bb01f6e958db6[m
+Author: Mehmet A. Nadi <mnadi@circinus-2.ics.uci.edu>
+Date:   Mon Apr 24 12:59:36 2023 -0700
+
+    add comment for future referece
+
+[33mcommit d174f20aaedba71a302bccd10791678929999c7c[m
+Author: Mehmet A. Nadi <mnadi@circinus-2.ics.uci.edu>
+Date:   Mon Apr 24 12:58:51 2023 -0700
+
+    add try catch for get_tbd_url for safety
+
+[33mcommit e59a2ae16cb5f4af7c7ca5088bb166d9d15525b4[m
+Merge: 490739b c722fe8
+Author: Mehmet A. Nadi <mnadi@circinus-30.ics.uci.edu>
+Date:   Mon Apr 24 07:18:51 2023 -0700
+
+    pull from dev
+
+[33mcommit 490739b62043dca07aece94d8b51a774742ab4c8[m
+Author: Mehmet A. Nadi <mnadi@circinus-1.ics.uci.edu>
+Date:   Sun Apr 23 15:04:39 2023 -0700
+
+    some changes nothing big
+
+[33mcommit c722fe82f6a2eec7b16390e216b6d5601e96fa48[m
+Merge: 88dacc4 e9c397f
+Author: Mehmet Nadi <31394639+mehmetalperen@users.noreply.github.com>
+Date:   Sun Apr 23 15:03:59 2023 -0700
+
+    Merge pull request #8 from mehmetalperen/colin_feature_branch
+    
+    added politeness to frontier.py and implemented queue instead of list…
+
+[33mcommit e9c397f8b8d7d38d06b5a90f609c0323731b75b5[m[33m ([m[1;31morigin/colin_feature_branch[m[33m)[m
+Author: Colin Zejda <ze17coli@gmail.com>
+Date:   Sun Apr 23 13:46:54 2023 -0700
+
+    added politeness to frontier.py and implemented queue instead of list for frontier.py
+
+[33mcommit 88dacc4767c057bb9f24bda4611ebbcfa839a2ff[m
+Merge: b9a15b1 84394d8
+Author: Mehmet Nadi <31394639+mehmetalperen@users.noreply.github.com>
+Date:   Fri Apr 21 18:01:34 2023 -0700
+
+    Merge pull request #7 from mehmetalperen/mehmet_branch
+
+[33mcommit 84394d80e5d407e283a54db8feda9872ce4be41c[m
+Author: Mehmet A. Nadi <mnadi@circinus-44.ics.uci.edu>
+Date:   Fri Apr 21 14:25:16 2023 -0700
+
+    extract_next_links function now adds 'http' if missing. chaged the format of is_valid function
+
+[33mcommit b9a15b135e2960213a4ab7d985280d76d52049af[m
+Merge: 64f0e81 081d1d3
+Author: Mehmet Nadi <31394639+mehmetalperen@users.noreply.github.com>
+Date:   Fri Apr 21 11:59:44 2023 -0700
+
+    Merge pull request #6 from mehmetalperen/mehmet_branch
+    
+    no fragments
+
+[33mcommit 081d1d356a3534b313827abc8cd5af5c76ebc024[m
+Author: Mehmet A. Nadi <mnadi@circinus-44.ics.uci.edu>
+Date:   Fri Apr 21 11:57:52 2023 -0700
+
+    no fragments
+
+[33mcommit 64f0e81560111164e57d279d30eb68866e1abc4f[m
+Merge: c758ff4 9c028dd
+Author: Mehmet Nadi <31394639+mehmetalperen@users.noreply.github.com>
+Date:   Fri Apr 21 09:46:48 2023 -0700
+
+    Merge pull request #4 from mehmetalperen/mehmet_branch
+    
+    fix relative domain
+
+[33mcommit 9c028dd5eca3ca3e874769dbe5fa4332650d6a72[m
+Author: Mehmet A. Nadi <mnadi@circinus-34.ics.uci.edu>
+Date:   Fri Apr 21 09:46:03 2023 -0700
+
+    fix relative domain
+
+[33mcommit c758ff4271a461a80c1e9b0a95b8e76361af2160[m
+Merge: baa7813 2702d73
+Author: Mehmet Nadi <31394639+mehmetalperen@users.noreply.github.com>
+Date:   Thu Apr 20 18:51:55 2023 -0700
+
+    Merge pull request #3 from mehmetalperen/mehmet_branch
+    
+    extract all links from webpage
+
+[33mcommit 2702d735e9fbbd6e19669cd1b3d1b63c3202497e[m
+Author: Mehmet A. Nadi <mnadi@circinus-31.ics.uci.edu>
+Date:   Thu Apr 20 18:50:49 2023 -0700
+
+    extract all links from webpage
+
+[33mcommit baa7813cb2b7ad43a0592aeadb1746576c681022[m
+Author: Cole Hajek <112986993+ColeHajek@users.noreply.github.com>
+Date:   Thu Apr 20 16:38:32 2023 -0700
+
+    Update config.ini
+    
+    added Cole's SID
+
+[33mcommit 52cd3ec8dfc0bffa0ae1d08184dad71a797a71c8[m
+Author: Levi Arias Ramirez <leviar@circinus-42.ics.uci.edu>
+Date:   Wed Apr 19 09:48:49 2023 -0700
+
+    levi id number added
+
+[33mcommit 5c80c171ddfd858ac248602d18e881f338ef2d08[m
+Author: Mehmet A. Nadi <mnadi@circinus-48.ics.uci.edu>
+Date:   Tue Apr 18 14:50:32 2023 -0700
+
+    add mehmet nadi student id
+
+[33mcommit d670ef9dd501ffe704c407d8b16074f0721056b1[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Mon Oct 31 17:59:53 2022 -0700
+
+    Forbid the use of urllib.request in scraper.py
+    
+    Students only understand rules when they are enforced. Sigh.
+
+[33mcommit f964ca4a2ae9c032e3924559e697a93d301a7da8[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Sat Oct 30 06:14:29 2021 -0700
+
+    Catch another possible exception here
+
+[33mcommit e9966baed863c62f801807d3e52a177ca10a55ae[m
+Merge: c7d1f7a cc7f0e0
+Author: crista <lopes@ics.uci.edu>
+Date:   Wed Oct 27 12:28:07 2021 -0700
+
+    Merge pull request #16 from splch/patch-1
+    
+    assert basic request checking
+
+[33mcommit cc7f0e0d87c4005b02e6dcb9829734fc8f08ea69[m
+Author: Spencer Churchill <spence@duck.com>
+Date:   Wed Oct 27 11:46:27 2021 -0700
+
+    assert basic request checking
+    
+    makes it slightly harder to use requests.get() / get() in scraper.py
+
+[33mcommit c7d1f7a2a9580ec0fd03505c19181be397733519[m
+Merge: 9f0fe3c 61c3428
+Author: crista <lopes@ics.uci.edu>
+Date:   Tue Oct 26 21:36:58 2021 -0700
+
+    Merge pull request #15 from splch/patch-1
+    
+    little wee minor spelling changes
+
+[33mcommit 9f0fe3c2f5462bfd333cb0926503f19f06127bef[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Tue Oct 26 21:20:29 2021 -0700
+
+    Avoid parsing None content, and catch EOFError for good measure
+
+[33mcommit 61c342894c9e8c78720901b65905481d9a737954[m
+Author: Spencer Churchill <spence@duck.com>
+Date:   Mon Oct 25 15:29:14 2021 -0700
+
+    little wee minor spelling changes
+
+[33mcommit a7088b032541e4cb5adf2e716b18c76281dd714c[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Wed Oct 20 20:40:24 2021 -0700
+
+    More documentation
+
+[33mcommit 8c20f2083e4b5d755be9d4d5b1e61c59f649a3db[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Wed Oct 20 20:35:44 2021 -0700
+
+    Added documentation about the arguments of extract_next_links
+
+[33mcommit 57fb9ecf1428b0b9d17fe6801f7ae2db542f62a8[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Sun Oct 13 19:41:34 2019 -0700
+
+    Increased politeness to 500ms
+
+[33mcommit 7d68294da2aae3a5aea843194226684685feee23[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Sun Oct 13 07:11:48 2019 -0700
+
+    Changed politeness delay to 300ms
+
+[33mcommit da82547dfabdca2c9b5cfec9890261c17ff6b54e[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Fri Oct 11 18:51:14 2019 -0700
+
+    Normalizing and deduping urls with different scheme but same path.
+
+[33mcommit f11c4ddd71fa5eb38238d70e5429ccfad31ff196[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Fri Oct 11 17:42:13 2019 -0700
+
+    Few more checks in place.
+
+[33mcommit 693a901751bc0bc060adf8c9cc2d1d8449a88b35[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Fri Oct 11 16:56:30 2019 -0700
+
+    Improvements to the code.
+
+[33mcommit 974910aff9007499ff2446cc631a83d19d31c1ff[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Wed Oct 9 20:43:22 2019 -0700
+
+    Update README
+
+[33mcommit e254b906f7769f8cdc84fe1cdda9c2e59e963c3a[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Wed Oct 9 14:37:19 2019 -0700
+
+    Update to README
+
+[33mcommit b57d82575c065bd06219f1660885badd343d5678[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Wed Oct 9 14:29:42 2019 -0700
+
+    Update README
+
+[33mcommit 0b7434ebddb680820a682e1912d40c462dd7d2a4[m
+Author: crista <lopes@ics.uci.edu>
+Date:   Wed Oct 9 14:26:10 2019 -0700
+
+    Change the order of config sections and vars
+
+[33mcommit dfee499f1bac374753871f32b775a32a312f2424[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Wed Oct 9 13:22:51 2019 -0700
+
+    Update README.md
+
+[33mcommit b47d117fb0868439a1d73da3b7df2c45cc0e8b9a[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Wed Oct 9 13:18:41 2019 -0700
+
+    Added a small structure to scraper.py
+
+[33mcommit bc3a5eaf61f7fe772d6a232fa17ccf40f335b781[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Wed Oct 9 13:18:19 2019 -0700
+
+    Adding the is_valid function.
+
+[33mcommit 487627b5f7dd600c072db5e69adf42974105aef2[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Wed Oct 9 13:11:42 2019 -0700
+
+    Update README.md
+
+[33mcommit 521a543ebb72bad618559a34cd1cd91f7c0b9c4d[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Wed Oct 9 13:07:37 2019 -0700
+
+    updating readme.
+
+[33mcommit 1c35cf4882583ccbb235e840e96995a3f73427f1[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Wed Oct 9 12:58:50 2019 -0700
+
+    readme and modifications.
+
+[33mcommit 99b2c426af3ee555099c85f3be9e1f834621d89d[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Tue Oct 8 13:42:02 2019 -0700
+
+    Thread count should be 1 as this is not thread safe.
+
+[33mcommit 882a115bd00d7e38d204a50c2b6226d31d27c4ae[m
+Author: Rohan Achar <ra.rohan@gmail.com>
+Date:   Tue Oct 8 13:38:25 2019 -0700
+
+    First commit.

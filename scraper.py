@@ -35,34 +35,34 @@ def tokenizer(page_text_content):
 def count_tokens(tokens):
     with shelve.open("wordCount.shelve") as db:
         for token in tokens:
-            if not token:
+            if not token: #if it happens to be an empty string (shuond't happen)
                 continue
             if token in db:
-                db[token] += 1
+                db[token] += 1 # if its already in a dictionary, incriment by 1
             else:
-                db[token] = 1
+                db[token] = 1 # if its not yet in a dictionary, add it and have its counter = 1
     db.close()
 
 def is_longest_page(url, tokens):
     with shelve.open("largest_page.shelve") as db: #largest_site = (url, len)
-        if 'largest_site' in db:
-            if db['largest_site'][1] < len(tokens):
-                db['largest_site'] = (url,len(tokens))
-        else:
+        if 'largest_site' in db: #if there is a largest sight in this file...
+            if db['largest_site'][1] < len(tokens): # if current largest sight is smaller than cur url's site
+                db['largest_site'] = (url,len(tokens)) # set largest site to cur urls's site
+        else: # here, there is not a largest sight in the file, so add it
             db['largest_site'] = (url,len(tokens))
     db.close()
 
 
-def check_crawl_persmission(url):
-    rp = robotparser.RobotFileParser()
-    rp.set_url(urljoin(url, '/robots.txt'))
+def check_crawl_persmission(url): # MEHMET WTH IS THIS THING
+    rp = robotparser.RobotFileParser() # check robot.txt file and its permissions
+    rp.set_url(urljoin(url, '/robots.txt')) #confused about this and the lines below vvv
     rp.read()
     return rp.can_fetch('*', url)
 
 def is_absolute_url(url):
     return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
-def is_valid_domain(netloc):
+def is_valid_domain(netloc): # makes sure that it is within the 4 domains
     netloc = netloc.lower()
     return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
 
@@ -136,30 +136,36 @@ def scraper(url, resp):
     These urls will be added to the Frontier and retrieved from the cache. 
     These urls have to be filtered so that urls that do not have to be downloaded are not added to the frontier.
     '''
-    if resp.status != 200 or not resp.raw_response or not resp.raw_response.content or len(url) > 170 or not check_crawl_persmission(url): # return [] if err or lenght of the url greater than 150, then its most likely a trap.
+    # return [] if...
+        # resp status is not valid (200)
+        # resp.raw_response is an empty response (same for raw_response.content)
+        # err or length of the url greater than 170, then its most likely a trap.
+        # url len is unreasonably long
+        # robot.txt does not give us permission to crawl
+    if resp.status != 200 or not resp.raw_response or not resp.raw_response.content or len(url) > 170 or not check_crawl_persmission(url): 
         return []   
     
-    links = extract_next_links(url, resp)
-    res = [link for link in links if is_valid(link)]
+    links = extract_next_links(url, resp) # extract next links now that the url is shown to be valid
+    res = [link for link in links if is_valid(link)] # loop through each link in links to see if its valid, if it is add it resp
     return res 
 
 
 
 def soup_and_soupText(resp):
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
-    return (soup, soup.get_text())
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser') # get the html content from the response
+    return (soup, soup.get_text()) # MEHMET EXPLAIN ?????
     
 def is_trap(finger_print):
-    with shelve.open("hash_values.shelve") as db:
-        if "hash_values" in db:
-            for other_finger_print in db['hash_values']:
-                if areSimilar(finger_print,other_finger_print):
+    with shelve.open("hash_values.shelve") as db: # open the file with the hash values (aka fingerprints)
+        if "hash_values" in db: # if there are hash values
+            for other_finger_print in db['hash_values']:  # loop through each one
+                if areSimilar(finger_print,other_finger_print): # see if they are similar
                     #db['hash_values'].append(finger_print)
                     db.close()
-                    return True
+                    return True #if they are similar, return True
         else:
-            db['hash_values'] = []
-        db['hash_values'].append(finger_print)
+            db['hash_values'] = [] # make the hash value "holder" (holds all hash values in a list)
+        db['hash_values'].append(finger_print) # append the first hash value
     db.close()
     return False
 def extract_next_links(url, resp):
@@ -178,19 +184,19 @@ def extract_next_links(url, resp):
     if not text_content: #if there is no content in the site, we dont want to crawl it. 
         return []        
     links = soup.find_all('a', href=True) #all the links from the html content
-    text_content = soup.get_text()
-    tokens = tokenizer(text_content)
-    finger_print = getFP(tokens)
+    text_content = soup.get_text() # get text from soup
+    tokens = tokenizer(text_content) # tokenize the text
+    finger_print = getFP(tokens) # get the fingerprint from the tokens
     
-    if is_trap(finger_print):
+    if is_trap(finger_print): # compares fingerprints with each other
         return []
     
-    count_tokens(tokens)
-    is_longest_page(url, tokens)
+    count_tokens(tokens) # count the tokens and store the count in wordCount.shelve (for most common words)
+    is_longest_page(url, tokens) # find the longest page
                 
     urls = []
     for link in links:
-        cur_link = link['href']
+        cur_link = link['href'] # MEHMET WHAT IS THISSS ???
         if 'mailto:' in cur_link:
             continue
         if '#' in cur_link: #if fragment found, remove the fragment part
@@ -199,9 +205,9 @@ def extract_next_links(url, resp):
         if is_absolute_url(cur_link):
             if '//' == cur_link[0:2]: # add http if missing
                 cur_link = 'http:'+cur_link
-            urls.append(cur_link) #http is not missing, url is absolute absolute
+            urls.append(cur_link) # http is not missing, url is absolute absolute
         else:
-            urls.append(url+cur_link) #relative link, combine cur_link with url
+            urls.append(url+cur_link) # relative link, combine cur_link with url
             
     return urls
     
