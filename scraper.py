@@ -95,13 +95,43 @@ def getFP(tokens):
 
 def areSimilar(set1, set2):
     #jaccard similarity, see lecture 9.5 page 13
-    intersection = set1.intersection(set2)
-    union = set1.union(set2)
-    similarity = len(intersection) / len(union)
-    if(similarity>=0.92):
+    # intersection = set1.intersection(set2)
+    # union = set1.union(set2)
+    # similarity = len(intersection) / len(union)
+    # if(similarity>=0.94):
+    #     return True
+    # else:
+    #     return False
+    size1 = len(list1)
+    size2 = len(list2)
+    dict1 = {}
+    dict2 = {}
+
+    for item in list1: # create a dictionary with the # of occurences of each key
+        if item in dict1:
+            dict1[item] += 1 
+        else:
+            dict1[item] = 1
+
+    for item in list2: # create a dictionary with the # of occurences of each key
+        if item in dict2:
+            dict2[item] += 1
+        else:
+            dict2[item] = 1
+    
+    count = 0
+    for key in dict1:
+        if key in dict2:
+            count += min(dict1[key], dict2[key]) # calculate the number of keys that they have in common
+    
+    percentSimu = count / max(size1, size2)
+    print(percentSimu)
+    if percentSimu > 0.90:
         return True
     else:
         return False
+    
+
     
 
 
@@ -186,8 +216,8 @@ def extract_next_links(url, resp):
     links = soup.find_all('a', href=True) #all the links from the html content
     text_content = soup.get_text() # get text from soup
     tokens = tokenizer(text_content) # tokenize the text
-    finger_print = getFP(tokens) # get the fingerprint from the tokens
-    print(finger_print)
+    setTockens = tokens#change the tokens to a set
+    finger_print = getFP(setTockens) # get the fingerprint from the tokens
     
     if is_trap(finger_print): # compares fingerprints with each other
         return []
