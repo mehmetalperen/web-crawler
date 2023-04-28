@@ -93,7 +93,7 @@ def getFP(tokens):
     else:
         return mod4HashValues
 
-def areSimilar(set1, set2):
+def areSimilar(list1, list2):
     #jaccard similarity, see lecture 9.5 page 13
     # intersection = set1.intersection(set2)
     # union = set1.union(set2)
