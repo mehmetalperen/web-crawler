@@ -105,7 +105,7 @@ def is_trap(finger_print):
         else:
             db['hash_values'] = []
             
-        db['hash_values'].append(finger_print)
+    db['hash_values'].append(finger_print)
     db.close()
     return False
 def extract_next_links(url, resp):
