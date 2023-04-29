@@ -98,7 +98,7 @@ def is_trap(finger_print):
         if "hash_values" in db:
             for other_finger_print in db['hash_values']:
                 similarity = Simhash(finger_print).distance(Simhash(other_finger_print))
-                if similarity < 10:
+                if similarity < 50:
                     db['hash_values'].append(finger_print)
                     db.close()
                     return True

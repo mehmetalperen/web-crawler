@@ -15,6 +15,7 @@ def download(url, config, logger=None):
                 params=[("q", f"{url}"), ("u", f"{config.user_agent}")])
         except requests.exceptions.RequestException as er:
             thisError = True
+            time.sleep(5)
 
     try:
         if resp and resp.content:
