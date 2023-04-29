@@ -41,6 +41,7 @@ def count_tokens(tokens):
                 db[token] += 1
             else:
                 db[token] = 1
+    db.sync()
     db.close()
 
 def is_longest_page(url, tokens):
@@ -50,6 +51,7 @@ def is_longest_page(url, tokens):
                 db['largest_site'] = (url,len(tokens))
         else:
             db['largest_site'] = (url,len(tokens))
+    db.sync()
     db.close()
 
 
@@ -67,13 +69,13 @@ def is_valid_domain(netloc):
     return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
 
 
-def calculate_page_fingerprint(text_content):
-    # first web scrape a website for all text in body tags
-    # create fingerprint hash using all the text
-    hash_method = hashlib.md5()
-    text_content_bytes = text_content.encode('utf-8')  # encode string as bytes
-    hash_method.update(text_content_bytes)
-    return hash_method.hexdigest()
+# def calculate_page_fingerprint(text_content):
+#     # first web scrape a website for all text in body tags
+#     # create fingerprint hash using all the text
+#     hash_method = hashlib.md5()
+#     text_content_bytes = text_content.encode('utf-8')  # encode string as bytes
+#     hash_method.update(text_content_bytes)
+#     return hash_method.hexdigest()
 def scraper(url, resp):
     '''
     This function needs to return a list of urls that are scraped from the response. 
@@ -93,21 +95,24 @@ def soup_and_soupText(resp):
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
     return (soup, soup.get_text())
     
-def is_trap(finger_print):
-    with shelve.open("hash_values.shelve") as db:
-        if "hash_values" in db:
-            for other_finger_print in db['hash_values']:
-                similarity = Simhash(finger_print).distance(Simhash(other_finger_print))
-                if similarity < 50:
-                    db['hash_values'].append(finger_print)
-                    db.close()
-                    return True
-        else:
-            db['hash_values'] = []
-            
-    db['hash_values'].append(finger_print)
+def is_trap(text_content):
+    db = shelve.open("hash_values.shelve", writeback=True)
+    finger_print = Simhash(text_content)
+    if "hash_values" in db: # if there are hash values
+        for other_fingerprint in db['hash_values']:  # loop through each one
+            other_fingerprint = other_fingerprint[0]            
+            similarity = finger_print.distance(other_fingerprint) # see if they are similar
+            if similarity <= 17:
+                db.close()
+                return True #if they are similar, return True
+    else:
+        db['hash_values'] = [] # make the hash value "holder" (holds all hash values in a list)
+
+    db['hash_values'].append([finger_print]) # append the first hash value as a string
+    db.sync()
     db.close()
     return False
+
 def extract_next_links(url, resp):
     '''
     # Implementation required.
@@ -126,9 +131,8 @@ def extract_next_links(url, resp):
     links = soup.find_all('a', href=True) #all the links from the html content
     text_content = soup.get_text()
     
-    finger_print = calculate_page_fingerprint(text_content)
     
-    if is_trap(finger_print):
+    if is_trap(text_content):
         return []
     
     tokens = tokenizer(text_content)

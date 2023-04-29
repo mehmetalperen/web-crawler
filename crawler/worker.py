@@ -52,24 +52,7 @@ class Worker(Thread):
         if os.path.isfile(filename):
             os.remove(filename)
 
-        with open(filename, 'w') as file:
-            
-            with shelve.open("largest_page.shelve") as db:
-                str_res = 'Largest website is :' + str(db['largest_site']) + '\n'
-                file.write(str_res) #(url, len)
-                print(str_res)
-            db.close()
-            
-            file.write('50 most common words are: '+ '\n')
-            print('50 most common words are: '+ '\n')
-            with shelve.open("wordCount.shelve") as db: #{words: amount_seen}
-                ranked_list = sorted(db.items(), key=lambda el: (-el[1], el[0]), reverse=False)
-                for word in ranked_list[:50]:
-                    str_write = str(word) + ' '
-                    file.write(str_write)
-                print(ranked_list, '\n')
-            db.close()
-            file.write('\n')
+        file = open(filename, 'w')
             
         amount_unique_page_visited = 0
         ics_domain_dic = {}
@@ -90,33 +73,41 @@ class Worker(Thread):
                     ics_domain_dic[key_domain] = 1
             if is_url_visited:
                 amount_unique_page_visited += 1
-        
-        file.write(str(len(self.frontier.save)) + ' unique URLs found.\n')
-        print(str(len(self.frontier.save)) + ' unique URLs found.\n')
-        
+
         ics_domain_sorted = sorted(ics_domain_dic.items(), key=lambda el: el[0], reverse=False)
         
         
-        file.write(str(amount_unique_page_visited)+ ' unique pages visited.\n')
-        print(str(amount_unique_page_visited)+ ' unique pages visited.\n')
+        file.write('Out of '+str(len(self.frontier.save)) + ' unique URLs found, we visited '+ str(amount_unique_page_visited)+ ' unique pages.\n')
+            
+        with shelve.open("largest_page.shelve") as db:
+            str_res = 'Largest website is in terms of number of words:' + str(db['largest_site']) + '\n'
+            file.write(str_res) #(url, len)
         
         write_ics_domain_len = str(len(ics_domain_dic)) + ' subdomain of isc.uci.edu found\n'
         file.write(write_ics_domain_len)
-        print(write_ics_domain_len)
         
         for domain in ics_domain_sorted:
             file.write(str(domain[0]) + ' seen ' + str(domain[1]) + ' times \n')
-            print(str(domain[0]) + ' seen ' + str(domain[1]) + ' times \n')
             
+        
+       
+        
+        file.write('50 most common words are: '+ '\n')
+        with shelve.open("wordCount.shelve") as db: #{words: amount_seen}
+            ranked_list = sorted(db.items(), key=lambda el: (-el[1], el[0]), reverse=False)
+            for word in ranked_list[:50]:
+                str_write = str(word) + ' '
+                file.write(str_write)
+
         file.close()
         print('===================DONE====================')
     
     def run(self):
-        # print_counter = 0
+        print_counter = 0
         while True:
-            # if print_counter >= 10: #just to see what we have. i will remove this
-            #     self.show_what_you_have()
-            #     print_counter = 0
+            if print_counter >= 10: #just to see what we have. i will remove this
+                self.get_report()
+                print_counter = 0
             tbd_url = self.frontier.get_tbd_url()
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
@@ -130,7 +121,7 @@ class Worker(Thread):
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
-            # print_counter += 1
+            print_counter += 1
             time.sleep(self.config.time_delay)
         self.get_report()
 
