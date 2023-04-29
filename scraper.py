@@ -35,7 +35,7 @@ def tokenizer(page_text_content):
 def count_tokens(tokens):
     with shelve.open("wordCount.shelve") as db:
         for token in tokens:
-            if not token:
+            if not token:       # empty somehow
                 continue
             if token in db:
                 db[token] += 1
@@ -43,17 +43,16 @@ def count_tokens(tokens):
                 db[token] = 1
     db.close()
 
-def is_longest_page(url, tokens):
+def is_longest_page(url, num_tokens):
     with shelve.open("largest_page.shelve") as db: #largest_site = (url, len)
         if 'largest_site' in db:
-            if db['largest_site'][1] < len(tokens):
-                db['largest_site'] = (url,len(tokens))
+            if db['largest_site'][1] < num_tokens:
+                db['largest_site'] = (url, num_tokens)
         else:
-            db['largest_site'] = (url,len(tokens))
+            db['largest_site'] = (url, num_tokens)
     db.close()
 
-
-def check_crawl_persmission(url):
+def check_crawl_persmission(url):           # can we crawl according to robots.txt
     rp = robotparser.RobotFileParser()
     rp.set_url(urljoin(url, '/robots.txt'))
     rp.read()
@@ -66,14 +65,6 @@ def is_valid_domain(netloc):
     netloc = netloc.lower()
     return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
 
-
-def calculate_page_fingerprint(text_content):
-    # first web scrape a website for all text in body tags
-    # create fingerprint hash using all the text
-    hash_method = hashlib.md5()
-    text_content_bytes = text_content.encode('utf-8')  # encode string as bytes
-    hash_method.update(text_content_bytes)
-    return hash_method.hexdigest()
 def scraper(url, resp):
     '''
     This function needs to return a list of urls that are scraped from the response. 
@@ -88,26 +79,24 @@ def scraper(url, resp):
     return res 
 
 
-
 def soup_and_soupText(resp):
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
     return (soup, soup.get_text())
     
-def is_trap(finger_print):
+def is_trap(simhash_fp):  # fp for fingerprint
     with shelve.open("hash_values.shelve") as db:
         if "hash_values" in db:
-            for other_finger_print in db['hash_values']:
-                similarity = Simhash(finger_print).distance(Simhash(other_finger_print))
-                if similarity < 10:
-                    db['hash_values'].append(finger_print)
+            for other_fp in db['hash_values']:
+                similarity = other_fp.distance(simhash_fp)    # gives values 0-64, 0 meaning exact match, 64 meaning completely different
+                if similarity <= 12.8:     # anything more than 20% similarity
                     db.close()
-                    return True
+                    return True            # it is a trap
         else:
-            db['hash_values'] = []
-            
-        db['hash_values'].append(finger_print)
+            db['hash_values'] = [] 
+            db['hash_values'].append(simhash_fp)
     db.close()
     return False
+
 def extract_next_links(url, resp):
     '''
     # Implementation required.
@@ -126,14 +115,14 @@ def extract_next_links(url, resp):
     links = soup.find_all('a', href=True) #all the links from the html content
     text_content = soup.get_text()
     
-    finger_print = calculate_page_fingerprint(text_content)
+    finger_print = Simhash(text_content)    # use simhash to create simhash fingerprint
     
     if is_trap(finger_print):
         return []
     
     tokens = tokenizer(text_content)
-    count_tokens(tokens)
-    is_longest_page(url, tokens)
+    count_tokens(tokens)                       # update token counts of all pages visited so far in wordCount.shelve
+    is_longest_page(url, len(tokens))          # update largest_page.shelve
                 
     urls = []
     for link in links:
