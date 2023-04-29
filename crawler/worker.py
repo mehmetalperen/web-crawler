@@ -103,11 +103,11 @@ class Worker(Thread):
         print('===================DONE====================')
     
     def run(self):
-        print_counter = 0
+        # print_counter = 0
         while True:
-            if print_counter >= 10: #just to see what we have. i will remove this
-                self.get_report()
-                print_counter = 0
+            # if print_counter >= 10: #just to see what we have. i will remove this
+            #     self.get_report()
+            #     print_counter = 0
             tbd_url = self.frontier.get_tbd_url()
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
@@ -121,7 +121,7 @@ class Worker(Thread):
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
-            print_counter += 1
+            # print_counter += 1
             time.sleep(self.config.time_delay)
         self.get_report()
 
