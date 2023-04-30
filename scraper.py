@@ -8,11 +8,33 @@ import shelve
 from urllib.parse import urljoin
 import hashlib
 from simhash import Simhash
+import threading
+
+lock_simhash = threading.Lock()
+lock_largest_page = threading.Lock()
+lock_word_count = threading.Lock()
 
 stop_words = set(get_stop_words('en'))
-'''
-check the classes to avoid global variables
-'''
+
+db_word_count = None
+db_largest_page = None
+db_simhash = None
+
+def open_shelves():
+    global db_word_count
+    db_word_count = shelve.open("wordCount.shelve", writeback=True)
+
+    global db_largest_page
+    db_largest_page = shelve.open("largest_page.shelve", writeback=True)
+
+    global db_simhash
+    db_simhash = shelve.open("hash_values.shelve", writeback=True)
+
+def close_shelves(db_word_count):
+    db_word_count.close()
+    db_largest_page.close()
+    db_simhash.close()
+
 def tokenizer(page_text_content):
     tokens = []
     
@@ -33,24 +55,25 @@ def tokenizer(page_text_content):
     return tokens
 
 def count_tokens(tokens):
-    with shelve.open("wordCount.shelve") as db:
+    with lock_word_count:
         for token in tokens:
             if not token:       # empty somehow
                 continue
-            if token in db:
-                db[token] += 1
+            if token in db_word_count:
+                db_word_count[token] += 1
             else:
-                db[token] = 1
-    db.close()
+                db_word_count[token] = 1
+        #db_word_count.sync()
 
 def is_longest_page(url, num_tokens):
-    with shelve.open("largest_page.shelve") as db: #largest_site = (url, len)
-        if 'largest_site' in db:
-            if db['largest_site'][1] < num_tokens:
-                db['largest_site'] = (url, num_tokens)
+    with lock_largest_page:
+        if 'largest_site' in db_largest_page:
+            if db_largest_page['largest_site'][1] < num_tokens:
+                db_largest_page['largest_site'] = (url, num_tokens)
+                #db_largest_page.sync()
         else:
-            db['largest_site'] = (url, num_tokens)
-    db.close()
+            db_largest_page['largest_site'] = (url, num_tokens)
+            #db_largest_page.sync()
 
 def check_crawl_persmission(url):           # can we crawl according to robots.txt
     rp = robotparser.RobotFileParser()
@@ -78,24 +101,24 @@ def scraper(url, resp):
     res = [link for link in links if is_valid(link)]
     return res 
 
-
 def soup_and_soupText(resp):
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
     return (soup, soup.get_text())
     
 def is_trap(simhash_fp):  # fp for fingerprint
-    with shelve.open("hash_values.shelve") as db:
-        if "hash_values" in db:
-            for other_fp in db['hash_values']:
+    with lock_simhash:
+        if "hash_values" in db_simhash:
+            for other_fp in db_simhash['hash_values']:
                 similarity = other_fp.distance(simhash_fp)    # gives values 0-64, 0 meaning exact match, 64 meaning completely different
                 if similarity <= 12.8:     # anything more than 20% similarity
-                    db.close()
                     return True            # it is a trap
         else:
-            db['hash_values'] = [] 
-            db['hash_values'].append(simhash_fp)
-    db.close()
+            db_simhash['hash_values'] = set()
+            db_simhash['hash_values'].add(simhash_fp)
+            #db_simhash.sync()
+    # db.close()
     return False
+
 
 def extract_next_links(url, resp):
     '''

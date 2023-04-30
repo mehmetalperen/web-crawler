@@ -7,12 +7,16 @@ import scraper
 import time
 import shelve
 import os
+import hashlib
+import time
+from urllib.parse import urlparse
 
 class Worker(Thread):
     def __init__(self, worker_id, config, frontier):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
         self.config = config
         self.frontier = frontier
+        self.worker_id = worker_id
         
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
@@ -112,26 +116,53 @@ class Worker(Thread):
         print('===================DONE====================')
     
     def run(self):
-        # print_counter = 0
         while True:
-            # if print_counter >= 10: #just to see what we have. i will remove this
-            #     self.show_what_you_have()
-            #     print_counter = 0
-            tbd_url = self.frontier.get_tbd_url()
+            gave_up = False
+
+            current_ts = time.time()         # current timestamp, in seconds, FP number
+            with self.frontier.lock:         # unlock automatically at break and continue (bc we go to top of loop)
+                tbd_url = self.frontier.get_tbd_url()
+            
+            # when there is no work, stay idle for 1 sec
             if not tbd_url:
-                self.logger.info("Frontier is empty. Stopping Crawler.")
-                break
-    
+                self.logger.info("Sleeping, no workload.")
+                time.sleep(1)  # sleep 1 sec, sleeping in a lock is bad
+                with self.frontier.lock:
+                    if current_ts - max(self.frontier.domain_to_timestamp.values()) > 10:       # if thread sits idle for 10 sec
+                        break     # only way to exit while true loop (end of thread)
+                    continue
+            
+            parsed_url = urlparse(tbd_url)
+            parsed_host = parsed_url.netloc
+
+            with self.frontier.lock:
+                # decide if we can download url
+                last_accessed_ts = self.frontier.domain_to_timestamp.get(parsed_host, 0)      # .get() is safe-- doesn't crash if key not there
+                if current_ts - last_accessed_ts <= self.config.time_delay:
+                    # give up, url is no good, put back in Frontier
+                    self.frontier.add_url(tbd_url)
+                    gave_up = True
+                else:
+                    self.frontier.domain_to_timestamp[parsed_host] = time.time()              # update dictionary with fresh time (bc we're going to download and scrape the url page)
+            if gave_up:
+                time.sleep(0.01)        # sleep 1 ms (lower thread contention for the lock, aka lock politeness)
+                continue
+
+            # hashed_url = int(hashlib.sha256(parsed_host.encode('utf-8')).hexdigest(), 16)   # old code
+            # which_thread = hashed_url % 4     # gives 0-3 (worker_ids are 0-3)
+
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")
-            scraped_urls = scraper.scraper(tbd_url, resp)
-            for scraped_url in scraped_urls:
-                self.frontier.add_url(scraped_url)
-            self.frontier.mark_url_complete(tbd_url)
-            # print_counter += 1
-            time.sleep(self.config.time_delay)
-        self.get_report()
+            scraped_urls = scraper.scraper(tbd_url, resp)   # thread safe, doesn't alter anything self.x
+            
+            with self.frontier.lock:                        # lock and save result (urls to frontier)
+                for scraped_url in scraped_urls:
+                    self.frontier.add_url(scraped_url)
+                self.frontier.mark_url_complete(tbd_url)
+
+            #time.sleep(self.config.time_delay)            # put current thread to sleep for 0.5 sec (politeness maintained per thread), update: use dictionary in frontier 
+        #self.get_report()
 
         
