@@ -57,6 +57,17 @@ class Frontier(object):
                 f"Found save file {'hash_values.shelve'}, deleting it.")
             os.remove('hash_values.shelve')
             #-------------------------
+        if not os.path.exists('commonTraps.shelve') and not restart:
+            # Save file does not exist, but request to load save.
+            self.logger.info(
+                f"Did not find save file {'commonTraps.shelve'}, "
+                f"starting from seed.")
+        elif os.path.exists('commonTraps.shelve') and restart:
+            # Save file does exists, but request to start from seed.
+            self.logger.info(
+                f"Found save file {'commonTraps.shelve'}, deleting it.")
+            os.remove('commonTraps.shelve')
+            #-------------------------
         self.save = shelve.open(self.config.save_file)                      # save file = frontier.shelve (dictionary-like object)
         
         if restart:

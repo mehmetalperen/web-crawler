@@ -1,4 +1,6 @@
 import re
+import os
+#import requ
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import validators
@@ -6,8 +8,6 @@ from stop_words import get_stop_words
 from urllib import robotparser
 import shelve
 from urllib.parse import urljoin
-#import hashlib
-#from simhash import Simhash
 
 stop_words = set(get_stop_words('en'))
 '''
@@ -33,23 +33,25 @@ def tokenizer(page_text_content):
     return tokens
 
 def count_tokens(tokens):
-    with shelve.open("wordCount.shelve") as db:
-        for token in tokens:
-            if not token: #if it happens to be an empty string (shuond't happen)
-                continue
-            if token in db:
-                db[token] += 1 # if its already in a dictionary, incriment by 1
-            else:
-                db[token] = 1 # if its not yet in a dictionary, add it and have its counter = 1
+    db = shelve.open("wordCount.shelve", writeback=True)
+    for token in tokens:
+        if not token: #if it happens to be an empty string (shuond't happen)
+            continue
+        if token in db:
+            db[token] += 1 # if its already in a dictionary, incriment by 1
+        else:
+            db[token] = 1 # if its not yet in a dictionary, add it and have its counter = 1
+    db.sync()
     db.close()
 
 def is_longest_page(url, tokens):
-    with shelve.open("largest_page.shelve") as db: #largest_site = (url, len)
-        if 'largest_site' in db: #if there is a largest sight in this file...
-            if db['largest_site'][1] < len(tokens): # if current largest sight is smaller than cur url's site
-                db['largest_site'] = (url,len(tokens)) # set largest site to cur urls's site
-        else: # here, there is not a largest sight in the file, so add it
-            db['largest_site'] = (url,len(tokens))
+    db = shelve.open("largest_page.shelve", writeback=True) #largest_site = (url, len)
+    if 'largest_site' in db: #if there is a largest sight in this file...
+        if db['largest_site'][1] < len(tokens): # if current largest sight is smaller than cur url's site
+            db['largest_site'] = (url,len(tokens)) # set largest site to cur urls's site
+    else: # here, there is not a largest sight in the file, so add it
+        db['largest_site'] = (url,len(tokens))
+    db.sync()
     db.close()
 
 
@@ -62,8 +64,9 @@ def check_crawl_persmission(url): # MEHMET WTH IS THIS THING
 def is_absolute_url(url):
     return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
-def is_valid_domain(netloc): # makes sure that it is within the 4 domains
+def is_valid_domain(netloc): # makes sure that it is within the 4 domains & make sure it is not a redirect
     netloc = netloc.lower()
+    
     return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
 
 ''' Hashing functions start here'''
@@ -94,14 +97,6 @@ def getFP(tokens):
         return mod4HashValues
 
 def areSimilar(list1, list2):
-    #jaccard similarity, see lecture 9.5 page 13
-    # intersection = set1.intersection(set2)
-    # union = set1.union(set2)
-    # similarity = len(intersection) / len(union)
-    # if(similarity>=0.94):
-    #     return True
-    # else:
-    #     return False
     size1 = len(list1)
     size2 = len(list2)
     dict1 = {}
@@ -125,8 +120,8 @@ def areSimilar(list1, list2):
             count += min(dict1[key], dict2[key]) # calculate the number of keys that they have in common
     
     percentSimu = count / max(size1, size2)
-    print(percentSimu)
-    if percentSimu > 0.90:
+    # print(percentSimu)
+    if percentSimu > 0.76:
         return True
     else:
         return False
@@ -183,21 +178,57 @@ def scraper(url, resp):
 
 def soup_and_soupText(resp):
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser') # get the html content from the response
-    return (soup, soup.get_text()) # MEHMET EXPLAIN ?????
+    return (soup, soup.get_text())
     
 def is_trap(finger_print):
-    with shelve.open("hash_values.shelve") as db: # open the file with the hash values (aka fingerprints)
-        if "hash_values" in db: # if there are hash values
-            for other_finger_print in db['hash_values']:  # loop through each one
-                if areSimilar(finger_print,other_finger_print): # see if they are similar
-                    #db['hash_values'].append(finger_print)
-                    db.close()
-                    return True #if they are similar, return True
-        else:
-            db['hash_values'] = [] # make the hash value "holder" (holds all hash values in a list)
-        db['hash_values'].append(finger_print) # append the first hash value
+    traps = shelve.open("commonTraps.shelve", writeback=True)
+    db = shelve.open("hash_values.shelve", writeback=True)
+    if "commonTraps" in traps: # if there are hash values
+        print("commonTraps...")
+        for other_finger_print in traps['commonTraps']:  # loop through each one
+            if areSimilar(finger_print,other_finger_print): # see if they are similar
+                print("commonTraps trap!!")
+                traps.close()
+                db.close()
+                return True #if they are similar, return True
+    else:
+        print("making common traps...")
+        traps['commonTraps'] = [] # make the hash value "holder" (holds all hash values in a list)
+
+    if "hash_values" in db: # if there are hash values
+        print("stored hash traps...")
+        for other_finger_print in db['hash_values']:  # loop through each one
+            if areSimilar(finger_print,other_finger_print): # see if they are similar
+                if "commonTraps" in traps:
+                    traps["commonTraps"].append(finger_print)
+                # else:
+                #     traps["commonTraps"] = [] #make common traps
+                #     traps["commonTraps"].append(finger_print)
+                #     print("technically never print")
+                print("Hash_values trap  !!, commonTraps length:", len(traps["commonTraps"]))
+                traps.sync()
+                traps.close()
+                db.close()
+                return True #if they are similar, return True
+    else:
+        db['hash_values'] = [] # make the hash value "holder" (holds all hash values in a list)
+
+
+    print("Hash value len: ", len(db['hash_values']))
+    if(len(db['hash_values']) > 400): # MAY NEED TO MODIFY, HERE WE ONLY STORE 500 PAGES TO CHECK FOR TRAPS
+        db.sync()
+        db.close()
+        os.remove("hash_values.shelve")
+        db = shelve.open("hash_values.shelve", writeback=True)
+        db['hash_values'] = []
+        
+    db['hash_values'].append(finger_print) # append the first hash value
+    db.sync()
     db.close()
+    traps.sync()
+    traps.close()
     return False
+
 def extract_next_links(url, resp):
     '''
     # Implementation required.
@@ -214,10 +245,22 @@ def extract_next_links(url, resp):
     if not text_content: #if there is no content in the site, we dont want to crawl it. 
         return []        
     links = soup.find_all('a', href=True) #all the links from the html content
+
+    #LOOP THROUGH HERE AND CHECK FOR REDIRECT
+    # for link in links:
+    #     while(True):
+    #         res = requests.get(netloc) # see if it redirects
+    #         if res.history: # if true, it redirects
+    #             netloc = response.url # get the new url
+    #         else:
+    #             break
+
     text_content = soup.get_text() # get text from soup
     tokens = tokenizer(text_content) # tokenize the text
     setTockens = tokens#change the tokens to a set
     finger_print = getFP(setTockens) # get the fingerprint from the tokens
+    if len(finger_print) == 0:
+        return [] # too small to check for a trap, probably too small to have useful urls
     
     if is_trap(finger_print): # compares fingerprints with each other
         return []
