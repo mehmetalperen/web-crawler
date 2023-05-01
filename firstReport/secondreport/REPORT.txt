@@ -1,0 +1,12 @@
+Out of 542 unique URLs found, we visited 542 unique pages.
+Largest website is in terms of number of words:('https://www.ics.uci.edu/about/search/search_graduate_all.php', 3146)
+7 subdomain of isc.uci.edu found
+intranet.ics.uci.edu seen 1 times. 
+malek.ics.uci.edu seen 1 times. 
+seal.ics.uci.edu seen 1 times. 
+swiki.ics.uci.edu seen 1 times. 
+www.ics.uci.edu seen 534 times. 
+www.ics.uci.eduemployment seen 1 times. 
+www.informatics.uci.edu seen 1 times. 
+50 most common words are: 
+('website', 364) ('chen', 30) ('wang', 29) ('li', 24) ('html', 23) ('zhang', 23) ('liu', 22) ('software', 20) ('policies', 19) ('bren', 18) ('school', 17) ('uci', 17) ('irvine', 16) ('kim', 16) ('yu', 16) ('computer', 14) ('huang', 14) ('ics', 14) ('lin', 14) ('yang', 14) ('cellerator', 13) ('research', 13) ('academic', 12) ('engineering', 12) ('lee', 12) ('university', 12) ('contact', 11) ('donald', 10) ('events', 10) ('shah', 10) ('student', 10) ('2022', 9) ('40', 9) ('information', 9) ('ma', 9) ('min', 9) ('nguyen', 9) ('students', 9) ('xcellerator', 9) ('xu', 9) ('california', 8) ('development', 8) ('graduate', 8) ('support', 8) ('vas', 8) ('ali', 7) ('ca', 7) ('chang', 7) ('de', 7) ('eric', 7) 

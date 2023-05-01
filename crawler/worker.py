@@ -87,7 +87,7 @@ class Worker(Thread):
         file.write(write_ics_domain_len)
         
         for domain in ics_domain_sorted:
-            file.write(str(domain[0]) + ' seen ' + str(domain[1]) + ' times \n')
+            file.write(str(domain[0]) + ' seen ' + str(domain[1]) + ' times. \n')
             
         
        
