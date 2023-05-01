@@ -8,7 +8,7 @@ from stop_words import get_stop_words
 from urllib import robotparser
 import shelve
 from urllib.parse import urljoin
-import hashlib
+#import hashlib
 #from simhash import Simhash
 import threading
 
@@ -24,7 +24,6 @@ db_largest_page = None
 db_hash = None
 db_common_traps = None
 
-# NOTE: WE NEED TO OPEN commonTraps.shelve
 def open_shelves():
     global db_word_count
     db_word_count = shelve.open("wordCount.shelve", writeback=True)
@@ -97,7 +96,13 @@ def is_valid_domain(netloc): # makes sure that it is within the 4 domains & is n
     
     netloc = netloc.lower()
     
-    return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
+    if (".cs.uci.edu" in netloc) or (".ics.uci.edu" in netloc) or (".informatics.uci.edu" in netloc) or (".stat.uci.edu" in netloc): # READ THIS !!!!
+        return True
+    elif ("/cs.uci.edu" in netloc) or ("/ics.uci.edu" in netloc) or ("/informatics.uci.edu" in netloc) or ("/stat.uci.edu" in netloc):
+        return True
+    else:
+        return False
+    #return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
 
 ''' Hashing functions start here'''
 def threeGramHashNumber(three_gram):
@@ -155,9 +160,6 @@ def areSimilar(list1, list2):
         return True
     else:
         return False
-    
-
-    
 
 
 #function to convert list of tokens into a list of n-grams (n=3)
@@ -178,13 +180,7 @@ def get_3grams(tokens):
     return returnGrams
 '''hashing functions end here'''
 
-def calculate_page_fingerprint(text_content):
-    # first web scrape a website for all text in body tags
-    # create fingerprint hash using all the text
-    hash_method = hashlib.md5()
-    text_content_bytes = text_content.encode('utf-8')  # encode string as bytes
-    hash_method.update(text_content_bytes)
-    return hash_method.hexdigest()
+
 def scraper(url, resp):
     '''
     This function needs to return a list of urls that are scraped from the response. 
@@ -209,19 +205,19 @@ def soup_and_soupText(resp):
     return (soup, soup.get_text())
     
 def is_trap(finger_print):
-    #traps = shelve.open("commonTraps.shelve", writeback=True)
+    #db_common_traps = shelve.open("commonTraps.shelve", writeback=True)
     #db_hash = shelve.open("hash_values.shelve", writeback=True)
 
     with lock_common_traps:
-        if "commonTraps" in traps: # if there are hash values
+        if "commonTraps" in db_common_traps: # if there are hash values
             print("commonTraps...")
-            for other_finger_print in traps['commonTraps']:  # loop through each one
+            for other_finger_print in db_common_traps['commonTraps']:  # loop through each one
                 if areSimilar(finger_print,other_finger_print): # see if they are similar
                     print("commonTraps trap!!")
                     return True #if they are similar, return True
         else:
             print("making common traps...")
-            traps['commonTraps'] = [] # make the hash value "holder" (holds all hash values in a list)
+            db_common_traps['commonTraps'] = [] # make the hash value "holder" (holds all hash values in a list)
     
 
         with lock_simhash:
@@ -229,10 +225,10 @@ def is_trap(finger_print):
                 print("stored hash traps...")
                 for other_finger_print in db_hash['hash_values']:  # loop through each one
                     if areSimilar(finger_print,other_finger_print): # see if they are similar
-                        if "commonTraps" in traps:
-                            traps["commonTraps"].append(finger_print)
+                        if "commonTraps" in db_common_traps:
+                            db_common_traps["commonTraps"].append(finger_print)
 
-                        print("Hash_values trap  !!, commonTraps length:", len(traps["commonTraps"]))
+                        print("Hash_values trap  !!, commonTraps length:", len(db_common_traps["commonTraps"]))
                         return True #if they are similar, return True
             else:
                 db_hash['hash_values'] = [] # make the hash value "holder" (holds all hash values in a list)
@@ -271,8 +267,7 @@ def extract_next_links(url, resp):
 
     text_content = soup.get_text() # get text from soup
     tokens = tokenizer(text_content) # tokenize the text
-    setTockens = tokens#change the tokens to a set
-    finger_print = getFP(setTockens) # get the fingerprint from the tokens
+    finger_print = getFP(tokens) # get the fingerprint from the tokens
     if len(finger_print) == 0:
         print("too small, skip page")
         return [] # too small to check for a trap, probably too small to have useful urls
@@ -281,7 +276,7 @@ def extract_next_links(url, resp):
         return []
     
     count_tokens(tokens) # count the tokens and store the count in wordCount.shelve (for most common words)
-    is_longest_page(url, tokens) # find the longest page
+    is_longest_page(url, len(tokens)) # find the longest page
                 
     urls = []
     for link in links:
@@ -290,7 +285,8 @@ def extract_next_links(url, resp):
             continue
         if '#' in cur_link: #if fragment found, remove the fragment part
             cur_link= cur_link[:cur_link.index('#')]
-        
+        if 'view_news?id=' in cur_link:
+            cur_link = cur_link[:(cur_link.index("view_news?id=") + 17)]
         if is_absolute_url(cur_link):
             if '//' == cur_link[0:2]: # add http if missing
                 cur_link = 'http:'+cur_link
@@ -310,27 +306,19 @@ def is_valid(url):
             Question: do we filter out all except ics.uci.edu? (github README says this)
     """
     try:
-        urlsFound = shelve.open("urlsFound.shelve", writeback=True)
-
-        # if url in urlsFound:
-        #     print("duplicate URL")
-        #     return False # don't add duplicate URLS
-        # else:
-        #     urlsFound[url] = 1 ALREADY CHECKS FOR DUPLICATE URLS :/
-
         if not validators.url(url):
             return False
         parsed_url = urlparse(url)        # https://docs.python.org/3/library/urllib.parse.html 
         
         if not(parsed_url.scheme == 'http' or parsed_url.scheme == 'https'):
             return False
-        if not is_valid_domain(parsed_url.netloc) or "www.ics.uci.edu/community/news/view_news/" in url:   
+        if not is_valid_domain(parsed_url.netloc) in url:   
             return False
         return not re.match(
             r".*.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|ps|eps|tex|ppt|pptx|ppsx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
