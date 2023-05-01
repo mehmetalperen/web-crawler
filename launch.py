@@ -6,11 +6,10 @@ from utils.config import Config
 from crawler import Crawler
 from scraper import open_shelves, close_shelves
 
-
 def main(config_file, restart):
     cparser = ConfigParser()
-    cparser.read(config_file)           # read config file
-    config = Config(cparser)            # make Config object out of config file (look at config.py under utils)
+    cparser.read(config_file)
+    config = Config(cparser)
     config.cache_server = get_cache_server(config, restart)
     open_shelves()
     crawler = Crawler(config, restart)

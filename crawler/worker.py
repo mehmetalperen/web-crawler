@@ -116,6 +116,7 @@ class Worker(Thread):
         print('===================DONE====================')
     
     def run(self):
+        self.get_report()
         while True:
             gave_up = False
 
@@ -163,6 +164,6 @@ class Worker(Thread):
                 self.frontier.mark_url_complete(tbd_url)
 
             #time.sleep(self.config.time_delay)            # put current thread to sleep for 0.5 sec (politeness maintained per thread), update: use dictionary in frontier 
-        #self.get_report()
+        self.get_report()
 
         

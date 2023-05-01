@@ -30,7 +30,7 @@ def open_shelves():
     global db_simhash
     db_simhash = shelve.open("hash_values.shelve", writeback=True)
 
-def close_shelves(db_word_count):
+def close_shelves():
     db_word_count.close()
     db_largest_page.close()
     db_simhash.close()
@@ -180,7 +180,7 @@ def is_valid(url):
         
         if not(parsed_url.scheme == 'http' or parsed_url.scheme == 'https'):
             return False
-        if not is_valid_domain(parsed_url.netloc):   
+        if not is_valid_domain(parsed_url.netloc) or "www.ics.uci.edu/community/news/view_news/" in url:   
             return False
         return not re.match(
             r".*.(css|js|bmp|gif|jpe?g|ico"
