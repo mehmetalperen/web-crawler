@@ -64,7 +64,8 @@ def check_crawl_persmission(url): # MEHMET WTH IS THIS THING
 def is_absolute_url(url):
     return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
-def is_valid_domain(netloc): # makes sure that it is within the 4 domains & make sure it is not a redirect
+def is_valid_domain(netloc): # makes sure that it is within the 4 domains & is not a repeated link
+    
     netloc = netloc.lower()
     
     return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
@@ -86,7 +87,7 @@ def getFP(tokens):
     for item in grams:
         hashNumber = threeGramHashNumber(item)
         #only use some of the hashes (hashes with 0%4) to save memory
-        if hashNumber % 13 == 0:
+        if hashNumber % 7 == 0:
             mod4HashValues.append(hashNumber)
 
         allHashValues.append(hashNumber)
@@ -121,7 +122,7 @@ def areSimilar(list1, list2):
     
     percentSimu = count / max(size1, size2)
     # print(percentSimu)
-    if percentSimu > 0.76:
+    if percentSimu > 0.70:
         return True
     else:
         return False
@@ -260,6 +261,7 @@ def extract_next_links(url, resp):
     setTockens = tokens#change the tokens to a set
     finger_print = getFP(setTockens) # get the fingerprint from the tokens
     if len(finger_print) == 0:
+        print("too small, skip page")
         return [] # too small to check for a trap, probably too small to have useful urls
     
     if is_trap(finger_print): # compares fingerprints with each other
@@ -295,6 +297,14 @@ def is_valid(url):
             Question: do we filter out all except ics.uci.edu? (github README says this)
     """
     try:
+        urlsFound = shelve.open("urlsFound.shelve", writeback=True)
+
+        # if url in urlsFound:
+        #     print("duplicate URL")
+        #     return False # don't add duplicate URLS
+        # else:
+        #     urlsFound[url] = 1 ALREADY CHECKS FOR DUPLICATE URLS :/
+
         if not validators.url(url):
             return False
         parsed_url = urlparse(url)        # https://docs.python.org/3/library/urllib.parse.html 
