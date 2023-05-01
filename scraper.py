@@ -66,7 +66,7 @@ def is_absolute_url(url):
 
 def is_valid_domain(netloc):
     netloc = netloc.lower()
-    return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
+    return bool(re.search(".cs.uci.edu", netloc)) or bool(re.search(".ics.uci.edu", netloc)) or bool(re.search(".informatics.uci.edu", netloc)) or bool(re.search(".stat.uci.edu", netloc))
 
 
 # def calculate_page_fingerprint(text_content):
@@ -102,7 +102,7 @@ def is_trap(text_content):
         for other_fingerprint in db['hash_values']:  # loop through each one
             other_fingerprint = other_fingerprint[0]            
             similarity = finger_print.distance(other_fingerprint) # see if they are similar
-            if similarity <= 13: # 0 = same, 64 = different ran 17, 30, 12, 15
+            if similarity <= 13: # 0 = same, 64 = different ran 17, 30, 12, 15, 13 (13 gave 11k)
                 db.close()
                 return True #if they are similar, return True
     else:
@@ -178,7 +178,7 @@ def is_valid(url):
             r".*.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|ps|eps|tex|ppt|pptx|ppsx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
