@@ -269,15 +269,6 @@ def extract_next_links(url, resp):
         return []        
     links = soup.find_all('a', href=True) #all the links from the html content
 
-    #LOOP THROUGH HERE AND CHECK FOR REDIRECT
-    # for link in links:
-    #     while(True):
-    #         res = requests.get(netloc) # see if it redirects
-    #         if res.history: # if true, it redirects
-    #             netloc = response.url # get the new url
-    #         else:
-    #             break
-
     text_content = soup.get_text() # get text from soup
     tokens = tokenizer(text_content) # tokenize the text
     setTockens = tokens#change the tokens to a set
