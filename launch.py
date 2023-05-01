@@ -9,15 +9,17 @@ import os
 import signal
 import sys
 
+from scraper import open_shelves, close_shelves
 
 def main(config_file, restart):
     cparser = ConfigParser()
     cparser.read(config_file)
     config = Config(cparser)
     config.cache_server = get_cache_server(config, restart)
+    open_shelves()
     crawler = Crawler(config, restart)
     crawler.start()
-
+    close_shelves()
 
 if __name__ == "__main__":
     #signal.signal(signal.SIGINT, sigIntHandle)

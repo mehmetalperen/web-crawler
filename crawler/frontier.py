@@ -2,7 +2,7 @@ import os
 import shelve
 import time
 
-from threading import Thread, RLock
+import threading
 from queue import Queue, Empty            # we should change it to a queue: https://stackoverflow.com/questions/1296511/efficiency-of-using-a-python-list-as-a-queue 
 
 from utils import get_logger, get_urlhash, normalize
@@ -12,7 +12,9 @@ class Frontier(object):
     def __init__(self, config, restart):
         self.logger = get_logger("FRONTIER")
         self.config = config
-        self.to_be_downloaded = Queue() # add urls to this queue
+        self.lock = threading.Lock()                 # protects shared frontier object from other threads
+        self.to_be_downloaded = Queue()              # add urls to this queue
+        self.domain_to_timestamp = dict()
         
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.

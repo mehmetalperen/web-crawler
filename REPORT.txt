@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #1: Out of 613 unique URLs found, we visited 10 unique pages.
 
 #2 Largest website is in terms of number of words: https://www.ics.uci.edu/about/about_factsfigures.php with 741 words
@@ -59,3 +60,7 @@ diversity: 31
 List of subdomains in alphabetical order:
 www.ics.uci.edu seen 7 times 
 www.informatics.uci.edu seen 1 times 
+=======
+50 most common words are: 
+('ics', 391620) ('students', 379102) ('computer', 343909) ('uci', 326426) ('school', 298134) ('policies', 284805) ('bren', 280933) ('research', 245229) ('science', 232469) ('news', 214707) ('events', 187567) ('donald', 182557) ('academic', 180876) ('student', 164040) ('graduate', 159220) ('contact', 157691) ('2022', 150833) ('information', 146310) ('machine', 137943) ('learning', 133447) ('sciences', 133327) ('work', 125785) ('media', 120713) ('faculty', 118154) ('year', 115563) ('said', 114832) ('people', 113852) ('dean', 109238) ('course', 105928) ('irvine', 104331) ('development', 99492) ('support', 98355) ('program', 96702) ('time', 95949) ('computing', 88796) ('undergraduate', 87463) ('highlights', 83456) ('get', 79522) ('staff', 76996) ('social', 76364) ('resources', 75760) ('make', 75070) ('class', 73740) ('really', 72227) ('human', 71863) ('plan', 71403) ('use', 71217) ('world', 71143) ('also', 70309) ('policy', 70283) 
+>>>>>>> new_colin

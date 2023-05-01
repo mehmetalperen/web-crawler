@@ -8,11 +8,42 @@ from stop_words import get_stop_words
 from urllib import robotparser
 import shelve
 from urllib.parse import urljoin
+import hashlib
+#from simhash import Simhash
+import threading
+
+lock_simhash = threading.Lock()
+lock_largest_page = threading.Lock()
+lock_word_count = threading.Lock()
+lock_common_traps = threading.Lock()
 
 stop_words = set(get_stop_words('en'))
-'''
-check the classes to avoid global variables
-'''
+
+db_word_count = None
+db_largest_page = None
+db_hash = None
+db_common_traps = None
+
+# NOTE: WE NEED TO OPEN commonTraps.shelve
+def open_shelves():
+    global db_word_count
+    db_word_count = shelve.open("wordCount.shelve", writeback=True)
+
+    global db_largest_page
+    db_largest_page = shelve.open("largest_page.shelve", writeback=True)
+
+    global db_hash
+    db_hash = shelve.open("hash_values.shelve", writeback=True)
+    
+    global db_common_traps
+    db_common_traps = shelve.open("commonTraps.shelve", writeback=True)
+
+def close_shelves():
+    db_word_count.close()
+    db_largest_page.close()
+    db_hash.close()
+    db_common_traps.close()
+
 def tokenizer(page_text_content):
     tokens = []
     
@@ -33,31 +64,29 @@ def tokenizer(page_text_content):
     return tokens
 
 def count_tokens(tokens):
-    db = shelve.open("wordCount.shelve", writeback=True)
-    for token in tokens:
-        if not token: #if it happens to be an empty string (shuond't happen)
-            continue
-        if token in db:
-            db[token] += 1 # if its already in a dictionary, incriment by 1
+    with lock_word_count:
+        for token in tokens:
+            if not token:       # empty somehow
+                continue
+            if token in db_word_count:
+                db_word_count[token] += 1
+            else:
+                db_word_count[token] = 1
+        #db_word_count.sync()
+
+def is_longest_page(url, num_tokens):
+    with lock_largest_page:
+        if 'largest_site' in db_largest_page:
+            if db_largest_page['largest_site'][1] < num_tokens:
+                db_largest_page['largest_site'] = (url, num_tokens)
+                #db_largest_page.sync()
         else:
-            db[token] = 1 # if its not yet in a dictionary, add it and have its counter = 1
-    db.sync()
-    db.close()
+            db_largest_page['largest_site'] = (url, num_tokens)
+            #db_largest_page.sync()
 
-def is_longest_page(url, tokens):
-    db = shelve.open("largest_page.shelve", writeback=True) #largest_site = (url, len)
-    if 'largest_site' in db: #if there is a largest sight in this file...
-        if db['largest_site'][1] < len(tokens): # if current largest sight is smaller than cur url's site
-            db['largest_site'] = (url,len(tokens)) # set largest site to cur urls's site
-    else: # here, there is not a largest sight in the file, so add it
-        db['largest_site'] = (url,len(tokens))
-    db.sync()
-    db.close()
-
-
-def check_crawl_persmission(url): # MEHMET WTH IS THIS THING
-    rp = robotparser.RobotFileParser() # check robot.txt file and its permissions
-    rp.set_url(urljoin(url, '/robots.txt')) #confused about this and the lines below vvv
+def check_crawl_persmission(url):    #THIS FUNCTION DOES NOT WORK!!! HOLLY CRAP       # can we crawl according to robots.txt
+    rp = robotparser.RobotFileParser()
+    rp.set_url(urljoin(url, '/robots.txt'))
     rp.read()
     return rp.can_fetch('*', url)
 
@@ -175,59 +204,52 @@ def scraper(url, resp):
     res = [link for link in links if is_valid(link)] # loop through each link in links to see if its valid, if it is add it resp
     return res 
 
-
-
 def soup_and_soupText(resp):
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser') # get the html content from the response
     return (soup, soup.get_text())
     
 def is_trap(finger_print):
-    traps = shelve.open("commonTraps.shelve", writeback=True)
-    db = shelve.open("hash_values.shelve", writeback=True)
-    if "commonTraps" in traps: # if there are hash values
-        print("commonTraps...")
-        for other_finger_print in traps['commonTraps']:  # loop through each one
-            if areSimilar(finger_print,other_finger_print): # see if they are similar
-                print("commonTraps trap!!")
-                traps.close()
-                db.close()
-                return True #if they are similar, return True
-    else:
-        print("making common traps...")
-        traps['commonTraps'] = [] # make the hash value "holder" (holds all hash values in a list)
+    #traps = shelve.open("commonTraps.shelve", writeback=True)
+    #db_hash = shelve.open("hash_values.shelve", writeback=True)
 
-    if "hash_values" in db: # if there are hash values
-        print("stored hash traps...")
-        for other_finger_print in db['hash_values']:  # loop through each one
-            if areSimilar(finger_print,other_finger_print): # see if they are similar
-                if "commonTraps" in traps:
-                    traps["commonTraps"].append(finger_print)
-                # else:
-                #     traps["commonTraps"] = [] #make common traps
-                #     traps["commonTraps"].append(finger_print)
-                #     print("technically never print")
-                print("Hash_values trap  !!, commonTraps length:", len(traps["commonTraps"]))
-                traps.sync()
-                traps.close()
-                db.close()
-                return True #if they are similar, return True
-    else:
-        db['hash_values'] = [] # make the hash value "holder" (holds all hash values in a list)
+    with lock_common_traps:
+        if "commonTraps" in traps: # if there are hash values
+            print("commonTraps...")
+            for other_finger_print in traps['commonTraps']:  # loop through each one
+                if areSimilar(finger_print,other_finger_print): # see if they are similar
+                    print("commonTraps trap!!")
+                    return True #if they are similar, return True
+        else:
+            print("making common traps...")
+            traps['commonTraps'] = [] # make the hash value "holder" (holds all hash values in a list)
+    
+
+        with lock_simhash:
+            if "hash_values" in db_hash: # if there are hash values
+                print("stored hash traps...")
+                for other_finger_print in db_hash['hash_values']:  # loop through each one
+                    if areSimilar(finger_print,other_finger_print): # see if they are similar
+                        if "commonTraps" in traps:
+                            traps["commonTraps"].append(finger_print)
+
+                        print("Hash_values trap  !!, commonTraps length:", len(traps["commonTraps"]))
+                        return True #if they are similar, return True
+            else:
+                db_hash['hash_values'] = [] # make the hash value "holder" (holds all hash values in a list)
 
 
-    print("Hash value len: ", len(db['hash_values']))
-    if(len(db['hash_values']) > 400): # MAY NEED TO MODIFY, HERE WE ONLY STORE 500 PAGES TO CHECK FOR TRAPS
-        db.sync()
-        db.close()
-        os.remove("hash_values.shelve")
-        db = shelve.open("hash_values.shelve", writeback=True)
-        db['hash_values'] = []
-        
-    db['hash_values'].append(finger_print) # append the first hash value
-    db.sync()
-    db.close()
-    traps.sync()
-    traps.close()
+            print("Hash value len: ", len(db_hash['hash_values']))
+            db_hash['hash_values'].append(finger_print) # append the first hash value
+    # if(len(db_hash['hash_values']) > 400): # MAY NEED TO MODIFY, HERE WE ONLY STORE 500 PAGES TO CHECK FOR TRAPS
+    #     db_hash.sync()
+    #     db_hash.close()
+    #     os.remove("hash_values.shelve")
+    #     db_hash = shelve.open("hash_values.shelve", writeback=True)
+    #     db_hash['hash_values'] = []
+    
+
+    
+
     return False
 
 def extract_next_links(url, resp):
@@ -311,7 +333,7 @@ def is_valid(url):
         
         if not(parsed_url.scheme == 'http' or parsed_url.scheme == 'https'):
             return False
-        if not is_valid_domain(parsed_url.netloc):   
+        if not is_valid_domain(parsed_url.netloc) or "www.ics.uci.edu/community/news/view_news/" in url:   
             return False
         return not re.match(
             r".*.(css|js|bmp|gif|jpe?g|ico"
