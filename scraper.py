@@ -56,17 +56,21 @@ def is_longest_page(url, tokens):
 
 
 def check_crawl_persmission(url):
-    rp = robotparser.RobotFileParser()
-    rp.set_url(urljoin(url, '/robots.txt'))
-    rp.read()
-    return rp.can_fetch('*', url)
+
+    try:
+        rp = robotparser.RobotFileParser()
+        rp.set_url(urljoin(url, '/robots.txt')) # this might be err
+        rp.read()
+        return rp.can_fetch('*', url)   
+    except:
+        return False
 
 def is_absolute_url(url):
     return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
 def is_valid_domain(netloc):
     netloc = netloc.lower()
-    return bool(re.search(".cs.uci.edu", netloc)) or bool(re.search(".ics.uci.edu", netloc)) or bool(re.search(".informatics.uci.edu", netloc)) or bool(re.search(".stat.uci.edu", netloc))
+    return bool(".cs.uci.edu" in netloc) or bool(".ics.uci.edu" in netloc) or bool(".informatics.uci.edu" in netloc) or bool(".stat.uci.edu" in netloc)
 
 
 # def calculate_page_fingerprint(text_content):
@@ -102,7 +106,7 @@ def is_trap(text_content):
         for other_fingerprint in db['hash_values']:  # loop through each one
             other_fingerprint = other_fingerprint[0]            
             similarity = finger_print.distance(other_fingerprint) # see if they are similar
-            if similarity <= 13: # 0 = same, 64 = different ran 17, 30, 12, 15, 13 (13 gave 11k)
+            if similarity <= 13: # 0 = same, 64 = different ran 17, 30, 12, 15, 13 (13 gave 11k) (never finished 12 thinking it got into a trap. it may or may not be true)
                 db.close()
                 return True #if they are similar, return True
     else:
