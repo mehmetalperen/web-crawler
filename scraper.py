@@ -1,6 +1,5 @@
 import re
 import os
-#import requ
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import validators
@@ -8,8 +7,6 @@ from stop_words import get_stop_words
 from urllib import robotparser
 import shelve
 from urllib.parse import urljoin
-#import hashlib
-#from simhash import Simhash
 import threading
 
 lock_simhash = threading.Lock()
@@ -83,11 +80,14 @@ def is_longest_page(url, num_tokens):
             db_largest_page['largest_site'] = (url, num_tokens)
             #db_largest_page.sync()
 
-def check_crawl_persmission(url):    #THIS FUNCTION DOES NOT WORK!!! HOLLY CRAP       # can we crawl according to robots.txt
-    rp = robotparser.RobotFileParser()
-    rp.set_url(urljoin(url, '/robots.txt'))
-    rp.read()
-    return rp.can_fetch('*', url)
+def check_crawl_persmission(url):      # can we crawl according to robots.txt
+    try:
+        rp = robotparser.RobotFileParser()
+        rp.set_url(urljoin(url, '/robots.txt'))
+        rp.read()
+        return rp.can_fetch('*', url)
+    except:
+        return False
 
 def is_absolute_url(url):
     return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
@@ -201,8 +201,12 @@ def scraper(url, resp):
     return res 
 
 def soup_and_soupText(resp):
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser') # get the html content from the response
-    return (soup, soup.get_text())
+    # get the html content from the response
+    try:
+        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+        return (soup, soup.get_text())
+    except:
+        return (None, "")
     
 def is_trap(finger_print):
     #db_common_traps = shelve.open("commonTraps.shelve", writeback=True)
@@ -210,13 +214,13 @@ def is_trap(finger_print):
 
     with lock_common_traps:
         if "commonTraps" in db_common_traps: # if there are hash values
-            print("commonTraps...")
+            # print("commonTraps...")
             for other_finger_print in db_common_traps['commonTraps']:  # loop through each one
                 if areSimilar(finger_print,other_finger_print): # see if they are similar
-                    print("commonTraps trap!!")
+                    # print("commonTraps trap!!")
                     return True #if they are similar, return True
         else:
-            print("making common traps...")
+            # print("making common traps...")
             db_common_traps['commonTraps'] = [] # make the hash value "holder" (holds all hash values in a list)
     
 
@@ -225,7 +229,7 @@ def is_trap(finger_print):
                 print("stored hash traps...")
                 for other_finger_print in db_hash['hash_values']:  # loop through each one
                     if areSimilar(finger_print,other_finger_print): # see if they are similar
-                        if "commonTraps" in db_common_traps:
+                        if "commonTraps" in db_common_traps: # ensures the "commonTraps" exists
                             db_common_traps["commonTraps"].append(finger_print)
 
                         print("Hash_values trap  !!, commonTraps length:", len(db_common_traps["commonTraps"]))
@@ -234,7 +238,7 @@ def is_trap(finger_print):
                 db_hash['hash_values'] = [] # make the hash value "holder" (holds all hash values in a list)
 
 
-            print("Hash value len: ", len(db_hash['hash_values']))
+            # print("Hash value len: ", len(db_hash['hash_values']))
             db_hash['hash_values'].append(finger_print) # append the first hash value
     # if(len(db_hash['hash_values']) > 400): # MAY NEED TO MODIFY, HERE WE ONLY STORE 500 PAGES TO CHECK FOR TRAPS
     #     db_hash.sync()
@@ -242,9 +246,6 @@ def is_trap(finger_print):
     #     os.remove("hash_values.shelve")
     #     db_hash = shelve.open("hash_values.shelve", writeback=True)
     #     db_hash['hash_values'] = []
-    
-
-    
 
     return False
 
@@ -267,9 +268,13 @@ def extract_next_links(url, resp):
 
     text_content = soup.get_text() # get text from soup
     tokens = tokenizer(text_content) # tokenize the text
+    if len(tokens) == 0:
+        # print("insignificant text content (no tokens)")
+        return []
+
     finger_print = getFP(tokens) # get the fingerprint from the tokens
     if len(finger_print) == 0:
-        print("too small, skip page")
+        # print("too small, skip page")
         return [] # too small to check for a trap, probably too small to have useful urls
     
     if is_trap(finger_print): # compares fingerprints with each other
@@ -280,8 +285,8 @@ def extract_next_links(url, resp):
                 
     urls = []
     for link in links:
-        cur_link = link['href'] # MEHMET WHAT IS THISSS ???
-        if 'mailto:' in cur_link:
+        cur_link = link['href'] # get link from href
+        if 'mailto:' in cur_link: #skip cur_link bc it's not a url
             continue
         if '#' in cur_link: #if fragment found, remove the fragment part
             cur_link= cur_link[:cur_link.index('#')]
@@ -314,7 +319,7 @@ def is_valid(url):
             return False
         if not is_valid_domain(parsed_url.netloc) in url:   
             return False
-        return not re.match(
+        return not re.match(#make sure we are detecting unwanted types. we were missing ppsx previously. check for more that we are missing
             r".*.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"

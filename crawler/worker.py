@@ -7,7 +7,6 @@ import scraper
 import time
 import shelve
 import os
-import hashlib
 import time
 from urllib.parse import urlparse
 
@@ -77,11 +76,6 @@ class Worker(Thread):
         for domain in ics_domain_sorted:
             file.write(str(domain[0]) + ' seen ' + str(domain[1]) + ' times \n')
             
-        
-       
-        
-
-
         file.close()
         print('===================DONE====================')
     
@@ -98,7 +92,7 @@ class Worker(Thread):
                 self.logger.info("Sleeping, no workload.")
                 time.sleep(1)  # sleep 1 sec, sleeping in a lock is bad
                 with self.frontier.lock:
-                    if current_ts - max(self.frontier.domain_to_timestamp.values()) > 10:       # if thread sits idle for 10 sec
+                    if current_ts - max(self.frontier.domain_to_timestamp.values()) > 140:       # if thread sits idle for 100 sec
                         break     # only way to exit while true loop (end of thread)
                     continue
             
@@ -118,9 +112,6 @@ class Worker(Thread):
                 time.sleep(0.01)        # sleep 1 ms (lower thread contention for the lock, aka lock politeness)
                 continue
 
-            # hashed_url = int(hashlib.sha256(parsed_host.encode('utf-8')).hexdigest(), 16)   # old code
-            # which_thread = hashed_url % 4     # gives 0-3 (worker_ids are 0-3)
-
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
@@ -133,6 +124,7 @@ class Worker(Thread):
                 self.frontier.mark_url_complete(tbd_url)
 
             #time.sleep(self.config.time_delay)            # put current thread to sleep for 0.5 sec (politeness maintained per thread), update: use dictionary in frontier 
+        
         self.get_report()
 
         
