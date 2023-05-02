@@ -56,25 +56,33 @@ class Worker(Thread):
         
         
         file.write('#1: Out of '+str(len(self.frontier.save)) + ' unique URLs found, we visited '+ str(amount_unique_page_visited)+ ' unique pages.\n\n')
-            
+        print('#1: Out of '+str(len(self.frontier.save)) + ' unique URLs found, we visited '+ str(amount_unique_page_visited)+ ' unique pages.\n\n')
+
         with shelve.open("largest_page.shelve") as db:
             str_res = '#2 Largest website is in terms of number of words: ' + str(db['largest_site'][0]) + " with " + str(db['largest_site'][1]) + ' words\n\n'
             file.write(str_res) #(url, len)
+            print(str_res)
 
-        file.write('#3: 50 most common words are: '+ '\n')
+        file.write('#3: 50 most common words are: ' + '\n')
+        print('#3: 50 most common words are: ' + '\n')
         with shelve.open("wordCount.shelve") as db: #{words: amount_seen}
             ranked_list = sorted(db.items(), key=lambda el: (-el[1], el[0]), reverse=False)
             for word in ranked_list[:50]:
                 str_write = str(word[0]) + ': ' + str(word[1]) + '\n'
                 file.write(str_write)
+                print(str_write)
         
         file.write("\n#4: \n")
+        print("\n#4: \n")
         write_ics_domain_len = str(len(ics_domain_dic)) + ' subdomain of isc.uci.edu found\n'
         file.write(write_ics_domain_len)
+        print(write_ics_domain_len)
         
         file.write("List of subdomains in alphabetical order:\n")
+        print("List of subdomains in alphabetical order:\n")
         for domain in ics_domain_sorted:
             file.write(str(domain[0]) + ' seen ' + str(domain[1]) + ' times \n')
+            print(str(domain[0]) + ' seen ' + str(domain[1]) + ' times \n')
             
         file.close()
         print('===================DONE====================')
