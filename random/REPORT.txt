@@ -1,0 +1,61 @@
+#1: Out of 613 unique URLs found, we visited 10 unique pages.
+
+#2 Largest website is in terms of number of words: https://www.ics.uci.edu/about/about_factsfigures.php with 741 words
+
+#3: 50 most common words are: 
+bren: 258
+school: 214
+computer: 202
+research: 175
+policies: 143
+donald: 138
+ics: 125
+information: 118
+science: 117
+faculty: 101
+uci: 101
+academic: 91
+contact: 86
+graduate: 86
+sciences: 84
+students: 81
+undergraduate: 77
+hall: 70
+student: 70
+events: 66
+computing: 60
+informatics: 59
+staff: 57
+statistics: 57
+visit: 57
+news: 54
+dean: 53
+irvine: 50
+us: 46
+department: 45
+2022: 44
+gift: 43
+course: 42
+engineering: 42
+support: 42
+policy: 40
+welcome: 40
+ph: 38
+campus: 37
+development: 36
+resources: 36
+media: 35
+apply: 34
+master: 34
+social: 34
+software: 34
+data: 32
+year: 32
+areas: 31
+diversity: 31
+
+#4: 
+2 subdomain of isc.uci.edu found
+List of subdomains in alphabetical order:
+www.ics.uci.edu seen 7 times 
+www.informatics.uci.edu seen 1 times 
