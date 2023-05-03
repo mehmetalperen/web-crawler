@@ -184,12 +184,12 @@ def is_valid(url):
         return not re.match(
             r".*.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|ppsx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed_url.path.lower())
+            + r"|wav|avi|xml|mov|rdf|mpeg|ram|json|m4v|mkv|ogg|ogv|pdf"
+            + r"|ps|py|rss|eps|atom|n3|tex|ttl|ppt|pptx|ppsx|doc|docx|xls|xlsx|names"
+            + r"|data|dat|bat|img|nrg|cmd|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+            + r"|epub|dll|owl|nt|gpx|vmdk|xmp|raw|aac|svg|cnf|m4a|mpg|tgz|sha1"
+            + r"|cr2|rw2|dng|arw|kmz|kml|thmx|nef|mso|flv|arff|rtf|jar|csv"
+            + r"|rm|dbf|tmp|temp|old|archive|log|bak|sqlite|backup|tab|sql|accdb|mdb|ods|tsv|smil|wmv|swf|wma|zip|rar|gz)$", parsed_url.path.lower())
 
     except TypeError:
         print ("TypeError for ", parsed_url)
