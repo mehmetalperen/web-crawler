@@ -96,8 +96,11 @@ def scraper(url, resp):
 
 
 def soup_and_soupText(resp):
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
-    return (soup, soup.get_text())
+    try:
+        soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
+        return (soup, soup.get_text())
+    except:
+        return (None, '')
     
 def is_trap(text_content):
     db = shelve.open("hash_values.shelve", writeback=True)
