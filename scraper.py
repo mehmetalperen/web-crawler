@@ -109,7 +109,7 @@ def is_trap(text_content):
         for other_fingerprint in db['hash_values']:  # loop through each one
             other_fingerprint = other_fingerprint[0]            
             similarity = finger_print.distance(other_fingerprint) # see if they are similar
-            if similarity <= 13: # 0 = same, 64 = different ran 17, 30, 12, 15, 13 (13 gave 11k) (never finished 12 thinking it got into a trap. it may or may not be true)
+            if similarity <= 12: # 0 = same, 64 = different ran 17, 30, 12, 15, 13 (13 gave 11k) (never finished 12 thinking it got into a trap. it may or may not be true)
                 db.close()
                 return True #if they are similar, return True
     else:
