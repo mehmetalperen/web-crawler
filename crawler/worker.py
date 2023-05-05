@@ -37,7 +37,7 @@ class Worker(Thread):
         for url_hash in self.frontier.save: #hash_url = (url, is_visited)
             # get the url
             cur_url = self.frontier.save[url_hash][0] #self.frontier = { url_hash = ('http://vision.ics.uci.edu/about', True)}
-            #get each url part and add it to "url" parts if that part is not empty (MEHMET, is this true?)
+            #get each url part and add it to "url" parts if that part is not empty 
             url_parts = [part for part in cur_url.split('/') if part] # url_parts will be something like this ['http:', 'vision.ics.uci.edu', 'about']
             #save visited status
             is_url_visited = self.frontier.save[url_hash][1]
@@ -56,7 +56,7 @@ class Worker(Thread):
             if is_url_visited:
                 amount_unique_page_visited += 1 #incriment the is_url_visited count
 
-        # sort the domains by alphebatical order (MEHMET, this is true yah?)
+        # sort the domains by alphebatical order 
         ics_domain_sorted = sorted(ics_domain_dic.items(), key=lambda el: el[0], reverse=False)
         
         # write to the report the # of unique URLs found and the # of unique pages visited

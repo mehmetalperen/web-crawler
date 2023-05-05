@@ -113,13 +113,12 @@ def scraper(url, resp):
     return res 
 
 
-# MEHMET, please add explination here
 def soup_and_soupText(resp):
     try:
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
-        return (soup, soup.get_text())
+        return (soup, soup.get_text()) #return the soup object and the page text content
     except:
-        return (None, '')
+        return (None, '') #if there is an exception, catch it and return none and empty string as tuple 
 
 # is_trap: if it is a trap, return true, else return false
 # opens hash_values.shelve, then takes the fingerprint of the current text_content and compares
@@ -145,9 +144,8 @@ def is_trap(text_content):
 
 
 # Extracts text content and the links from the current page
-# MEHMET: plz explain the differnce between "url" and "resp"
 # then tokenizes the text_content, count the tokens, and update the longest page
-def extract_next_links(url, resp):
+def extract_next_links(url, resp):# url = url of the page we are scrapping. Resp = the object we get from http request
     '''
     # Implementation required.
     # url: the URL that was used to get the page
@@ -220,7 +218,7 @@ def is_valid(url):
         # checks to make sure that each url is within the valid domains we can search
         if not is_valid_domain(parsed_url.netloc):   
             return False
-        #makes sure the link does not end in the following: MEHMET, is this true?
+        #makes sure the link does not end in the following
         return not re.match(
             r".*.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
