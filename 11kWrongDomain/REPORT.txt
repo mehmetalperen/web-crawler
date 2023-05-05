@@ -1,6 +1,6 @@
-Out of 10931 unique URLs found, we visited 10931 unique pages.
-Largest website is in terms of number of words:('http://www.ics.uci.edu/~wjohnson/BIDA/Ch8/Ch8WinBUGScode.odc', 20520)
-70 subdomain of isc.uci.edu found
+Out of 11279 unique URLs found, we visited 11279 unique pages.
+Largest website is in terms of number of words:('http://www.ics.uci.edu/~dvk/pub/C16_SIGMOD14_Jeffrey.ppsx', 109003)
+73 subdomain of isc.uci.edu found
 Transformativeplay.ics.uci.edu seen 1 times. 
 accessibility.ics.uci.edu seen 1 times. 
 acoi.ics.uci.edu seen 90 times. 
@@ -20,6 +20,7 @@ create.ics.uci.edu seen 1 times.
 cwicsocal18.ics.uci.edu seen 12 times. 
 cyberclub.ics.uci.edu seen 1 times. 
 dgillen.ics.uci.edu seen 8 times. 
+economics.uci.edu seen 5 times. 
 emj.ics.uci.edu seen 40 times. 
 evoke.ics.uci.edu seen 5 times. 
 futurehealth.ics.uci.edu seen 683 times. 
@@ -29,6 +30,7 @@ hai.ics.uci.edu seen 6 times.
 hpi.ics.uci.edu seen 1 times. 
 i-sensorium.ics.uci.edu seen 1 times. 
 ibook.ics.uci.edu seen 1 times. 
+ics.uci.edu seen 4 times. 
 intranet.ics.uci.edu seen 1 times. 
 isg.ics.uci.edu seen 138 times. 
 jgarcia.ics.uci.edu seen 23 times. 
@@ -60,6 +62,7 @@ transformativeplay.ics.uci.edu seen 46 times.
 ugradforms.ics.uci.edu seen 1 times. 
 vision.ics.uci.edu seen 536 times. 
 wics.ics.uci.edu seen 245 times. 
+www.economics.uci.edu seen 322 times. 
 www.graphics.ics.uci.edu seen 1 times. 
 www.graphics.ics.uci.educalendar.html seen 1 times. 
 www.graphics.ics.uci.edugallery.html seen 1 times. 
@@ -67,9 +70,9 @@ www.graphics.ics.uci.eduindex.html seen 1 times.
 www.graphics.ics.uci.edunews.html seen 1 times. 
 www.graphics.ics.uci.eduprojects.html seen 1 times. 
 www.graphics.ics.uci.edupublication.html seen 1 times. 
-www.ics.uci.edu seen 7692 times. 
+www.ics.uci.edu seen 7693 times. 
 www.ics.uci.eduemployment seen 1 times. 
 www.informatics.uci.edu seen 228 times. 
 www.isg.ics.uci.edu seen 1 times. 
 50 most common words are: 
-('uci', 2386) ('10', 2029) ('research', 1820) ('data', 1758) ('computer', 1754) ('software', 1711) ('12', 1678) ('11', 1619) ('systems', 1380) ('ics', 1318) ('will', 1218) ('information', 1187) ('2022', 1152) ('2018', 1107) ('conference', 1097) ('science', 1080) ('na', 955) ('university', 954) ('13', 944) ('students', 919) ('engineering', 911) ('edu', 898) ('can', 893) ('design', 893) ('14', 857) ('international', 856) ('55', 852) ('us', 834) ('25', 831) ('8408', 828) ('code', 828) ('news', 823) ('ieee', 809) ('events', 803) ('time', 795) ('pm', 781) ('contact', 780) ('school', 767) ('irvine', 766) ('pdf', 761) ('acm', 755) ('computing', 752) ('professor', 737) ('56', 728) ('2019', 721) ('59', 721) ('63', 714) ('may', 709) ('60', 707) ('00', 700) 
+('uci', 2494) ('10', 2074) ('research', 1939) ('data', 1768) ('computer', 1755) ('software', 1712) ('12', 1706) ('11', 1655) ('systems', 1383) ('ics', 1318) ('will', 1274) ('information', 1199) ('2022', 1175) ('university', 1138) ('science', 1133) ('2018', 1130) ('conference', 1102) ('na', 1035) ('students', 977) ('13', 972) ('can', 968) ('edu', 941) ('us', 929) ('engineering', 911) ('design', 895) ('international', 886) ('55', 885) ('14', 884) ('pm', 879) ('news', 870) ('time', 867) ('25', 864) ('events', 849) ('student', 840) ('professor', 831) ('code', 830) ('8408', 828) ('irvine', 813) ('ieee', 809) ('may', 798) ('department', 796) ('contact', 792) ('school', 789) ('pdf', 762) ('acm', 755) ('59', 752) ('computing', 752) ('56', 747) ('graduate', 745) ('2019', 738) 
