@@ -13,6 +13,8 @@ stop_words = set(get_stop_words('en'))
 '''
 check the classes to avoid global variables
 '''
+
+# return a list of tokens
 def tokenizer(page_text_content):
     tokens = []
     
@@ -21,17 +23,21 @@ def tokenizer(page_text_content):
         if ch in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890': #check if character is in english alphabet or a number
             cur_word += ch.lower() #convert that ch to lower case and add it to the cur_word
         elif cur_word in stop_words:
-            cur_word = ""        
+            cur_word = ""
+        # if it is not a stop_word && is not alphanumeric && the length is greater than one, then we can append it to the list
         elif len(cur_word) > 1: #we do not want single charecters. for example James's would give us "James" and "s" if we dont do this 
             tokens.append(cur_word) # add cur word to token list 
             cur_word = "" #reset cur_word
         else:
             cur_word = ''
-            
-    if len(cur_word) > 1 and cur_word not in stop_words: #if cur_word is not empty, we need to add it to the list bc we do not wanna skip the last word unadded
+    
+    # if cur_word is not empty, we need to add it to the list bc we do not wanna skip the last word unadded
+    if len(cur_word) > 1 and cur_word not in stop_words: 
         tokens.append(cur_word)
     return tokens
 
+# Open wordCount.shelve, then incriment each counter if it exists
+# if it does not exist, then create the item in the dictionary and set its count equal to one
 def count_tokens(tokens):
     with shelve.open("wordCount.shelve") as db:
         for token in tokens:
@@ -44,6 +50,8 @@ def count_tokens(tokens):
     db.sync()
     db.close()
 
+# check the length of the list of tokens from the current largest count in largest_page.shelve
+# if the cureent page's toekns are larger, update the current largest site to (url,len(tokens))
 def is_longest_page(url, tokens):
     with shelve.open("largest_page.shelve") as db: #largest_site = (url, len)
         if 'largest_site' in db:
@@ -55,6 +63,9 @@ def is_longest_page(url, tokens):
     db.close()
 
 
+# checks the robot.txt file with robotparser
+# see if rp.can_fetch for all crawlers for that url and return that status (true if can read, false if you can't)
+# also catches if there was an error reading robots.txt, if there was, return False
 def check_crawl_persmission(url):
 
     try:
@@ -65,9 +76,13 @@ def check_crawl_persmission(url):
     except:
         return False
 
+
+# checks if the url is an absolute url
 def is_absolute_url(url):
     return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
+# checks to make sure that each url is within the valid domains we can search
+# note: we add the dot (".") at the beginning to make sure domains like "economics" doesn't get added
 def is_valid_domain(netloc):
     netloc = netloc.lower()
     return bool(".cs.uci.edu" in netloc) or bool(".ics.uci.edu" in netloc) or bool(".informatics.uci.edu" in netloc) or bool(".stat.uci.edu" in netloc)
@@ -80,6 +95,10 @@ def is_valid_domain(netloc):
 #     text_content_bytes = text_content.encode('utf-8')  # encode string as bytes
 #     hash_method.update(text_content_bytes)
 #     return hash_method.hexdigest()
+
+# Scraper: make sure that the passed url can get its links extracted, then called extract_next_links
+# this list of links is then passed ot is_valid(link) to make sure it is valid before adding it to res (the result of the
+# links to be scraped)
 def scraper(url, resp):
     '''
     This function needs to return a list of urls that are scraped from the response. 
@@ -94,14 +113,17 @@ def scraper(url, resp):
     return res 
 
 
-
+# MEHMET, please add explination here
 def soup_and_soupText(resp):
     try:
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
         return (soup, soup.get_text())
     except:
         return (None, '')
-    
+
+# is_trap: if it is a trap, return true, else return false
+# opens hash_values.shelve, then takes the fingerprint of the current text_content and compares
+#                           each fingerprint stored in "hash_values.shelve" with the current finger print of the page
 def is_trap(text_content):
     db = shelve.open("hash_values.shelve", writeback=True)
     finger_print = Simhash(text_content)
@@ -120,6 +142,11 @@ def is_trap(text_content):
     db.close()
     return False
 
+
+
+# Extracts text content and the links from the current page
+# MEHMET: plz explain the differnce between "url" and "resp"
+# then tokenizes the text_content, count the tokens, and update the longest page
 def extract_next_links(url, resp):
     '''
     # Implementation required.
@@ -142,27 +169,38 @@ def extract_next_links(url, resp):
     if is_trap(text_content):
         return []
     
+    #get tokens
     tokens = tokenizer(text_content)
+    #count tokens
     count_tokens(tokens)
+    #update longest page to see if this page is the longest page
     is_longest_page(url, tokens)
-                
+    
+
+    # for every link that you found on the page, do the following before addding it to
+    # the list of URLS
     urls = []
     for link in links:
         cur_link = link['href']
+        #if its a mail link (a link to email someone), skip this iteration
         if 'mailto:' in cur_link:
             continue
-        if '#' in cur_link: #if fragment found, remove the fragment part
+        #if fragment found, remove the fragment part
+        if '#' in cur_link: 
             cur_link= cur_link[:cur_link.index('#')]
-        
+        #if the url is absolute, see if the "http" is missing, if it is, add it
         if is_absolute_url(cur_link):
             if '//' == cur_link[0:2]: # add http if missing
                 cur_link = 'http:'+cur_link
             urls.append(cur_link) #http is not missing, url is absolute absolute
+        #if it is not an absolute url, add the current link to the url that you originally passed to the function
         else:
             urls.append(url+cur_link) #relative link, combine cur_link with url
             
     return urls
-    
+
+
+# checks to make sure the current URL passed is valid
 def is_valid(url):
     """
     # Decide whether to crawl this url or not. 
@@ -176,11 +214,13 @@ def is_valid(url):
         if not validators.url(url):
             return False
         parsed_url = urlparse(url)        # https://docs.python.org/3/library/urllib.parse.html 
-        
+        # the parsed url does not contain a propper "http" / "https"
         if not(parsed_url.scheme == 'http' or parsed_url.scheme == 'https'):
             return False
+        # checks to make sure that each url is within the valid domains we can search
         if not is_valid_domain(parsed_url.netloc):   
             return False
+        #makes sure the link does not end in the following: MEHMET, is this true?
         return not re.match(
             r".*.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"

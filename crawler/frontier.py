@@ -14,6 +14,8 @@ class Frontier(object):
         self.config = config
         self.to_be_downloaded = Queue()              # add urls to this queue
  
+        # the below: if it is restart, delete the file
+                  #  if it is not restart, attempt to open it
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
             self.logger.info(
