@@ -2,29 +2,126 @@ import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import validators
+from stop_words import get_stop_words
+from urllib import robotparser
+import shelve
+from urllib.parse import urljoin
+import hashlib
+from simhash import Simhash
 
+stop_words = set(get_stop_words('en'))
+'''
+check the classes to avoid global variables
+'''
+def tokenizer(page_text_content):
+    tokens = []
+    
+    cur_word = ""
+    for ch in page_text_content: #read line character by character
+        if ch in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890': #check if character is in english alphabet or a number
+            cur_word += ch.lower() #convert that ch to lower case and add it to the cur_word
+        elif cur_word in stop_words:
+            cur_word = ""        
+        elif len(cur_word) > 1: #we do not want single charecters. for example James's would give us "James" and "s" if we dont do this 
+            tokens.append(cur_word) # add cur word to token list 
+            cur_word = "" #reset cur_word
+        else:
+            cur_word = ''
+            
+    if len(cur_word) > 1 and cur_word not in stop_words: #if cur_word is not empty, we need to add it to the list bc we do not wanna skip the last word unadded
+        tokens.append(cur_word)
+    return tokens
+
+def count_tokens(tokens):
+    with shelve.open("wordCount.shelve") as db:
+        for token in tokens:
+            if not token:
+                continue
+            if token in db:
+                db[token] += 1
+            else:
+                db[token] = 1
+    db.sync()
+    db.close()
+
+def is_longest_page(url, tokens):
+    with shelve.open("largest_page.shelve") as db: #largest_site = (url, len)
+        if 'largest_site' in db:
+            if db['largest_site'][1] < len(tokens):
+                db['largest_site'] = (url,len(tokens))
+        else:
+            db['largest_site'] = (url,len(tokens))
+    db.sync()
+    db.close()
+
+
+def check_crawl_persmission(url):
+
+    try:
+        rp = robotparser.RobotFileParser()
+        rp.set_url(urljoin(url, '/robots.txt')) # this might be err
+        rp.read()
+        return rp.can_fetch('*', url)   
+    except:
+        return False
+
+def is_absolute_url(url):
+    return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
+
+def is_valid_domain(netloc):
+    netloc = netloc.lower()
+    return bool(".cs.uci.edu" in netloc) or bool(".ics.uci.edu" in netloc) or bool(".informatics.uci.edu" in netloc) or bool(".stat.uci.edu" in netloc)
+
+
+# def calculate_page_fingerprint(text_content):
+#     # first web scrape a website for all text in body tags
+#     # create fingerprint hash using all the text
+#     hash_method = hashlib.md5()
+#     text_content_bytes = text_content.encode('utf-8')  # encode string as bytes
+#     hash_method.update(text_content_bytes)
+#     return hash_method.hexdigest()
 def scraper(url, resp):
     '''
     This function needs to return a list of urls that are scraped from the response. 
     These urls will be added to the Frontier and retrieved from the cache. 
     These urls have to be filtered so that urls that do not have to be downloaded are not added to the frontier.
     '''
-    print('===========================TESTING START=======================') #FEEL FREE TO REMOVE THIS. 
-    print('URL:', url)#FEEL FREE TO REMOVE THIS. 
-    print('RESP: ', resp)#FEEL FREE TO REMOVE THIS. 
+    if resp.status != 200 or not resp.raw_response or not resp.raw_response.content or len(url) > 170 or not check_crawl_persmission(url): # return [] if err or lenght of the url greater than 150, then its most likely a trap.
+        return []   
+    
     links = extract_next_links(url, resp)
-    print('links: ', links)#FEEL FREE TO REMOVE THIS. 
     res = [link for link in links if is_valid(link)]
-    print('--------------------------------------------------------------')
-    print('RES: ', res)
-    print('===========================TESTING DONE=======================')#FEEL FREE TO REMOVE THIS. 
     return res 
 
 
-def is_absolute_url(url):
-    return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
+
+def soup_and_soupText(resp):
+    try:
+        soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
+        return (soup, soup.get_text())
+    except:
+        return (None, '')
+    
+def is_trap(text_content):
+    db = shelve.open("hash_values.shelve", writeback=True)
+    finger_print = Simhash(text_content)
+    if "hash_values" in db: # if there are hash values
+        for other_fingerprint in db['hash_values']:  # loop through each one
+            other_fingerprint = other_fingerprint[0]            
+            similarity = finger_print.distance(other_fingerprint) # see if they are similar
+            if similarity <= 12: # 0 = same, 64 = different ran 17, 30, 12, 15, 13 (13 gave 11k) (never finished 12 thinking it got into a trap. it may or may not be true)
+                db.close()
+                return True #if they are similar, return True
+    else:
+        db['hash_values'] = [] # make the hash value "holder" (holds all hash values in a list)
+
+    db['hash_values'].append([finger_print]) # append the first hash value as a string
+    db.sync()
+    db.close()
+    return False
 
 def extract_next_links(url, resp):
+    '''
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -33,12 +130,22 @@ def extract_next_links(url, resp):
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
-    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    if resp.status != 200: #if err, then return empty list
+    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content'''
+    
+    soup, text_content = soup_and_soupText(resp)
+    if not text_content: #if there is no content in the site, we dont want to crawl it. 
+        return []        
+    links = soup.find_all('a', href=True) #all the links from the html content
+    text_content = soup.get_text()
+    
+    
+    if is_trap(text_content):
         return []
     
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
-    links = soup.find_all('a', href=True) #all the links from the html content
+    tokens = tokenizer(text_content)
+    count_tokens(tokens)
+    is_longest_page(url, tokens)
+                
     urls = []
     for link in links:
         cur_link = link['href']
@@ -53,16 +160,14 @@ def extract_next_links(url, resp):
             urls.append(cur_link) #http is not missing, url is absolute absolute
         else:
             urls.append(url+cur_link) #relative link, combine cur_link with url
+            
     return urls
     
-def is_valid_domain(netloc):
-    netloc = netloc.lower()
-    return bool(re.search("cs.uci.edu", netloc)) or bool(re.search("ics.uci.edu", netloc)) or bool(re.search("informatics.uci.edu", netloc)) or bool(re.search("stat.uci.edu", netloc))
 def is_valid(url):
+    """
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
-    """
     Notes:
         -- domains: .ics.uci.edu, .cs.uci.edu, .informatics.uci.edu, .stat.uci.edu 
             Question: do we filter out all except ics.uci.edu? (github README says this)
@@ -79,12 +184,12 @@ def is_valid(url):
         return not re.match(
             r".*.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed_url.path.lower())
+            + r"|wav|avi|xml|mov|rdf|mpeg|ram|json|m4v|mkv|ogg|ogv|pdf"
+            + r"|ps|py|rss|eps|atom|n3|tex|ttl|ppt|pptx|ppsx|doc|docx|xls|xlsx|names"
+            + r"|data|dat|bat|img|odc|nrg|cmd|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+            + r"|epub|dll|owl|nt|gpx|vmdk|xmp|raw|aac|svg|cnf|m4a|mpg|tgz|sha1"
+            + r"|cr2|rw2|dng|arw|kmz|kml|thmx|nef|mso|flv|arff|rtf|jar|csv"
+            + r"|rm|dbf|tmp|temp|old|archive|log|bak|sqlite|backup|tab|sql|accdb|mdb|ods|tsv|smil|wmv|swf|wma|zip|rar|gz)$", parsed_url.path.lower())
 
     except TypeError:
         print ("TypeError for ", parsed_url)

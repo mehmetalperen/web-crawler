@@ -13,7 +13,7 @@ class Crawler(object):
     def start_async(self):
         self.workers = [
             self.worker_factory(worker_id, self.config, self.frontier)
-            for worker_id in range(self.config.threads_count)]
+            for worker_id in range(self.config.threads_count)] # this is where multi thread thing happens. 
         for worker in self.workers:
             worker.start()
 
