@@ -120,9 +120,7 @@ def is_valid_domain(netloc):
 #     hash_method.update(text_content_bytes)
 #     return hash_method.hexdigest()
 
-# Scraper: make sure that the passed url can get its links extracted, then called extract_next_links
-# this 
-# links to be scraped)
+
 def scraper(url, resp):
     '''
     scraper: returns a list of urls that are scraped from the response. 
@@ -148,9 +146,8 @@ def soup_and_soupText(resp):
     except:
         return (None, '') #if there is an exception, catch it and return none and empty string as tuple 
 
-# is_trap: if it is a trap, return true, else return false
-# opens hash_values.shelve, then takes the fingerprint of the current text_content and compares
-#                           each fingerprint stored in "hash_values.shelve" with the current finger print of the page
+
+
 def is_trap(text_content):
 '''
     is_trap: if it is a trap, return true, else false
