@@ -14,8 +14,10 @@ class Frontier(object):
         self.config = config
         self.to_be_downloaded = Queue()              # add urls to this queue
  
-        # the below: if it is restart, delete the file
-                  #  if it is not restart, attempt to open it
+'''
+    the below: if it is restart, delete the file
+               if it is not restart, attempt to open it
+'''
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
             self.logger.info(
@@ -72,7 +74,9 @@ class Frontier(object):
                     self.add_url(url)
 
     def _parse_save_file(self):
-        ''' This function can be overridden for alternate saving techniques. '''
+'''
+    _parse_save_file: checks the save file and prints the tbd_count and the total urls discovered
+'''
         total_count = len(self.save)
         tbd_count = 0
         for url, completed in self.save.values():
@@ -90,7 +94,12 @@ class Frontier(object):
         except IndexError:
             return None
 
+
     def add_url(self, url):
+'''
+    add_url: hashes teh url and adds the hash to self.save
+    - also places the url in the to_be_downloaded queue
+'''
         url = normalize(url)
         urlhash = get_urlhash(url)
         if urlhash not in self.save:
@@ -99,9 +108,13 @@ class Frontier(object):
             self.to_be_downloaded.put(url)                  # put() from Queue library
     
     def mark_url_complete(self, url):
+'''
+    mark_url_complete: find the url in self.save and marks it as complete (meaning it has been crawled)
+    - also checks to make sure it is in self.save as extra protection
+'''
         urlhash = get_urlhash(url)
         if urlhash not in self.save:
-            # This should not happen.
+            # This should not happen. Because it once pulled the URL from the saved URLs
             self.logger.error(
                 f"Completed url {url}, but have not seen it before.")
 
