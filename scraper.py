@@ -16,10 +16,10 @@ check the classes to avoid global variables
 
 
 def tokenizer(page_text_content):
-''' 
+    ''' 
     tokenizer: Takes the page_text_content returned by BeautifulSoup (as a string) and parses this text into tokens.
     - Tokens are a list of strings who's length that is greater than 1.
-'''
+    '''
     tokens = []
     
     cur_word = ""
@@ -42,11 +42,11 @@ def tokenizer(page_text_content):
 
 
 def count_tokens(tokens):
-'''
+    '''
     count_tokens: for each token in tokens, add it to the count of words for keeping track of the 50 most common words
     - Open wordCount.shelve, then incriment each counter if it exists
     - if it does not exist, then create the item in the dictionary and set its count equal to one
-'''
+    '''
     with shelve.open("wordCount.shelve") as db:
         for token in tokens:
             if not token:
@@ -60,11 +60,11 @@ def count_tokens(tokens):
 
 
 def is_longest_page(url, tokens):
-'''
+    '''
     is_longest_page: updates the longest page by checking it against the # of tokens in the current url
     - check the length of the list of tokens from the current largest count in largest_page.shelve
     - if the cureent page's toekns are larger, update the current largest site to (url,len(tokens))
-'''
+    '''
     with shelve.open("largest_page.shelve") as db: #largest_site = (url, len)
         if 'largest_site' in db:
             if db['largest_site'][1] < len(tokens):
@@ -77,12 +77,12 @@ def is_longest_page(url, tokens):
 
 
 def check_crawl_persmission(url):
-'''
+    '''
     check_crawl_permission:
     - checks the robot.txt file with robotparser
     - rp.can_fetch: sees if all cralwers can crawl that url, returns a bool (true if can crawl, false if not)
     - also catches if there was an error reading robots.txt, if there was, return False
-'''
+    '''
     try:
         rp = robotparser.RobotFileParser()
         rp.set_url(urljoin(url, '/robots.txt')) # this might be err
@@ -94,20 +94,20 @@ def check_crawl_persmission(url):
 
 
 def is_absolute_url(url):
-'''
+    '''
     is_absolute_url:
     - checks if the url is an absolute url
-'''
+    '''
     return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
 # checks to make sure that each url is within the valid domains we can search
 # note: we add the dot (".") at the beginning to make sure domains like "economics" doesn't get added
 def is_valid_domain(netloc):
-'''
+    '''
     is_valid_domain:
     - checks to make sure that each url is within the valid domains we can search
     - note: we add the dot (".") at the beginning to make sure domains like "economics" doesn't get added
-'''
+    '''
     netloc = netloc.lower()
     return bool(".cs.uci.edu" in netloc) or bool(".ics.uci.edu" in netloc) or bool(".informatics.uci.edu" in netloc) or bool(".stat.uci.edu" in netloc)
 
@@ -137,9 +137,9 @@ def scraper(url, resp):
 
 
 def soup_and_soupText(resp):
-'''
+    '''
     soup_and_soupText: gets the html content from the response and returns the soup object & the page text content
-'''
+    '''
     try:
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
         return (soup, soup.get_text()) #return the soup object and the page text content
@@ -149,11 +149,11 @@ def soup_and_soupText(resp):
 
 
 def is_trap(text_content):
-'''
+    '''
     is_trap: if it is a trap, return true, else false
     - opens hash_values.shelve & compares the fingerprints from the file to the current fingerprint
     - if they are similar according to our threshold, return true
-'''
+    '''
     db = shelve.open("hash_values.shelve", writeback=True)
     finger_print = Simhash(text_content)
     if "hash_values" in db: # if there are hash values
@@ -185,7 +185,8 @@ def extract_next_links(url, resp):# url = url of the page we are scrapping. Resp
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
-    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content'''
+    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
+    '''
     
     soup, text_content = soup_and_soupText(resp)
     if not text_content: #if there is no content in the site, we dont want to crawl it. 

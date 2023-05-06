@@ -90,10 +90,10 @@ class Worker(Thread):
     
 
     def run(self):
-'''
+    '''
     run: the main function to run the program
     - will run a loop until the frontier is empty
-'''
+    '''
         # print_counter = 0
         while True:
 
