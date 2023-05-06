@@ -14,8 +14,12 @@ stop_words = set(get_stop_words('en'))
 check the classes to avoid global variables
 '''
 
-# return a list of tokens
+
 def tokenizer(page_text_content):
+''' 
+    tokenizer: Takes the page_text_content returned by BeautifulSoup (as a string) and parses this text into tokens.
+    - Tokens are a list of strings who's length that is greater than 1.
+'''
     tokens = []
     
     cur_word = ""
@@ -36,9 +40,13 @@ def tokenizer(page_text_content):
         tokens.append(cur_word)
     return tokens
 
-# Open wordCount.shelve, then incriment each counter if it exists
-# if it does not exist, then create the item in the dictionary and set its count equal to one
+
 def count_tokens(tokens):
+'''
+    count_tokens: for each token in tokens, add it to the count of words for keeping track of the 50 most common words
+    - Open wordCount.shelve, then incriment each counter if it exists
+    - if it does not exist, then create the item in the dictionary and set its count equal to one
+'''
     with shelve.open("wordCount.shelve") as db:
         for token in tokens:
             if not token:
@@ -50,9 +58,13 @@ def count_tokens(tokens):
     db.sync()
     db.close()
 
-# check the length of the list of tokens from the current largest count in largest_page.shelve
-# if the cureent page's toekns are larger, update the current largest site to (url,len(tokens))
+
 def is_longest_page(url, tokens):
+'''
+    is_longest_page: updates the longest page by checking it against the # of tokens in the current url
+    - check the length of the list of tokens from the current largest count in largest_page.shelve
+    - if the cureent page's toekns are larger, update the current largest site to (url,len(tokens))
+'''
     with shelve.open("largest_page.shelve") as db: #largest_site = (url, len)
         if 'largest_site' in db:
             if db['largest_site'][1] < len(tokens):
@@ -63,11 +75,14 @@ def is_longest_page(url, tokens):
     db.close()
 
 
-# checks the robot.txt file with robotparser
-# see if rp.can_fetch for all crawlers for that url and return that status (true if can read, false if you can't)
-# also catches if there was an error reading robots.txt, if there was, return False
-def check_crawl_persmission(url):
 
+def check_crawl_persmission(url):
+'''
+    check_crawl_permission:
+    - checks the robot.txt file with robotparser
+    - rp.can_fetch: sees if all cralwers can crawl that url, returns a bool (true if can crawl, false if not)
+    - also catches if there was an error reading robots.txt, if there was, return False
+'''
     try:
         rp = robotparser.RobotFileParser()
         rp.set_url(urljoin(url, '/robots.txt')) # this might be err
@@ -77,13 +92,22 @@ def check_crawl_persmission(url):
         return False
 
 
-# checks if the url is an absolute url
+
 def is_absolute_url(url):
+'''
+    is_absolute_url:
+    - checks if the url is an absolute url
+'''
     return 'www.' in url or 'http' in url or (len(url) >= 4 and url[:2] == '//') #some abosolute urls start with "//" for example "//swiki.ics.uci.edu/doku.php"
 
 # checks to make sure that each url is within the valid domains we can search
 # note: we add the dot (".") at the beginning to make sure domains like "economics" doesn't get added
 def is_valid_domain(netloc):
+'''
+    is_valid_domain:
+    - checks to make sure that each url is within the valid domains we can search
+    - note: we add the dot (".") at the beginning to make sure domains like "economics" doesn't get added
+'''
     netloc = netloc.lower()
     return bool(".cs.uci.edu" in netloc) or bool(".ics.uci.edu" in netloc) or bool(".informatics.uci.edu" in netloc) or bool(".stat.uci.edu" in netloc)
 
@@ -97,13 +121,14 @@ def is_valid_domain(netloc):
 #     return hash_method.hexdigest()
 
 # Scraper: make sure that the passed url can get its links extracted, then called extract_next_links
-# this list of links is then passed ot is_valid(link) to make sure it is valid before adding it to res (the result of the
+# this 
 # links to be scraped)
 def scraper(url, resp):
     '''
-    This function needs to return a list of urls that are scraped from the response. 
-    These urls will be added to the Frontier and retrieved from the cache. 
-    These urls have to be filtered so that urls that do not have to be downloaded are not added to the frontier.
+    scraper: returns a list of urls that are scraped from the response. 
+    - these urls will be added to the Frontier and retrieved from the cache. 
+    - These urls have to be filtered so that urls that do not have to be downloaded are not added to the frontier.
+        - list of links is then passed ot is_valid(link) to make sure it is valid before adding it to res
     '''
     if resp.status != 200 or not resp.raw_response or not resp.raw_response.content or len(url) > 170 or not check_crawl_persmission(url): # return [] if err or lenght of the url greater than 150, then its most likely a trap.
         return []   
@@ -114,6 +139,9 @@ def scraper(url, resp):
 
 
 def soup_and_soupText(resp):
+'''
+    soup_and_soupText: gets the html content from the response and returns the soup object & the page text content
+'''
     try:
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser') #get the html content from the response
         return (soup, soup.get_text()) #return the soup object and the page text content
@@ -124,6 +152,11 @@ def soup_and_soupText(resp):
 # opens hash_values.shelve, then takes the fingerprint of the current text_content and compares
 #                           each fingerprint stored in "hash_values.shelve" with the current finger print of the page
 def is_trap(text_content):
+'''
+    is_trap: if it is a trap, return true, else false
+    - opens hash_values.shelve & compares the fingerprints from the file to the current fingerprint
+    - if they are similar according to our threshold, return true
+'''
     db = shelve.open("hash_values.shelve", writeback=True)
     finger_print = Simhash(text_content)
     if "hash_values" in db: # if there are hash values
@@ -147,7 +180,7 @@ def is_trap(text_content):
 # then tokenizes the text_content, count the tokens, and update the longest page
 def extract_next_links(url, resp):# url = url of the page we are scrapping. Resp = the object we get from http request
     '''
-    # Implementation required.
+    # extract_next_links: extracts the links from a page, formats them correctly, and returns them in a list
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
     # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
@@ -198,15 +231,13 @@ def extract_next_links(url, resp):# url = url of the page we are scrapping. Resp
     return urls
 
 
-# checks to make sure the current URL passed is valid
 def is_valid(url):
     """
+    is_valid: checks to makes ure the current URL passed is valid
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
-    # There are already some conditions that return False.
     Notes:
-        -- domains: .ics.uci.edu, .cs.uci.edu, .informatics.uci.edu, .stat.uci.edu 
-            Question: do we filter out all except ics.uci.edu? (github README says this)
+        -- valid domains: .ics.uci.edu, .cs.uci.edu, .informatics.uci.edu, .stat.uci.edu 
     """
     try:
         if not validators.url(url):

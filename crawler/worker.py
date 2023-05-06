@@ -88,12 +88,14 @@ class Worker(Thread):
         file.close()
         print('===================DONE====================')
     
+
     def run(self):
+'''
+    run: the main function to run the program
+    - will run a loop until the frontier is empty
+'''
         # print_counter = 0
         while True:
-            # if print_counter >= 10: #just to see what we have. i will remove this
-            #     self.get_report()
-            #     print_counter = 0
 
             # get "to be downloaded" url
             tbd_url = self.frontier.get_tbd_url()
